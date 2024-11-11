@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "starting bluetoothctl"
+starting_bluetoothctl() {
 empty -f -i input -o output -L log_empty.log bluetoothctl
 empty -s -o input "power on\n"
 empty -s -o input "discoverable on\n"
@@ -8,16 +8,16 @@ empty -s -o input "scan on\n"
 empty -s -o input "scan off\n"
 empty -s -o input "discoverable off\n"
 empty -s -o input "devices\n"
+}
 
 
 #### Get name of device from the list of devices
-
-echo "get device mac address"
-device_name="Galaxy Tab S9"
+get_device_mac_address() {
+device_name=$1
 # https://unix.stackexchange.com/questions/256144/read-a-file-line-by-line-and-if-condition-is-met-continue-reading-till-next-cond
-file="output"
+file=$2
 IFS='\n'
-INPUT='input'
+INPUT=$3
 while read -r line; do
     if [[ $line == *"$device_name"* ]] ; then
         printline="yes"
@@ -26,10 +26,14 @@ while read -r line; do
     fi
 done < "$file"
 
-echo $INPUT
+echo "Input: " $INPUT
+#}
 
 
 #### Get the MAC address from the line (containing the device name) extracted earlier 
+#connect_to_device() {
+#INPUT=$1
+#file=$2
 
 # https://stackoverflow.com/questions/10586153/how-to-split-a-string-into-an-array-in-bash
 IFS=' ' read -r -a array <<< "$INPUT"
@@ -54,10 +58,20 @@ while read -r line; do
 done < "$file"
 empty -s -o input "menu gatt\n"
 empty -s -o input "list-attributes \n"
+}
+
+
+go_to_gatt_menu() {
+empty -s -o input "menu gatt\n"
+empty -s -o input "list-attributes \n"
+}
+
+read_characteristic() {
+uuid=$1
+file=$2
 
 var=0
 array=()
-uuid="3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1"
 attr=''
 prev=''
 
@@ -102,6 +116,10 @@ while read -r line; do
     	break
     fi
 done < "$file"
+}
+
+disconnect_device() {
+file=$1
 
 empty -s -o input "back\n"
 empty -s -o input "disconnect \n"
@@ -113,6 +131,11 @@ while read -r line; do
         break
     fi
 done < "$file"
+}
+
+
+switch_discoverable_off() {
+file=$1
 
 empty -s -o input "discoverable off\n"
 
@@ -123,10 +146,16 @@ while read -r line; do
         break
     fi
 done < "$file"
+}
 
+
+exit_bluetoothctl() {
 empty -s -o input "exit\n"
+}
+
 
 # kill process
+kill_process() {
 VAR1=$(pstree -g | grep bluetoothctl | cut -d '(' -f 3)
 pid=$(echo $VAR1 | cut -d ')' -f 1)
 # https://stackoverflow.com/questions/48261038/shell-script-how-to-check-if-variable-is-null-or-no
@@ -136,4 +165,4 @@ if [[ -n "$pid" ]]; then
 	echo "Process killed"
 fi
 echo "done"
-
+}
