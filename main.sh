@@ -2,10 +2,8 @@
 
 source cmds.sh
 
-# https://stackoverflow.com/questions/48167083/how-to-include-bash-scripts-with-relative-path
 read_from_file_name='datafile'
-#save_file_path="$(dirname "$0")/$read_from_file_name"
-save_filepath="./$read_from_file_name"
+save_filepath="./$read_from_file_name" 
 echo "file: $save_filepath"
 
 
@@ -14,26 +12,31 @@ remove_file() {
 
 # Remove file if already exists
 # https://stackoverflow.com/questions/31318068/shell-script-to-remove-a-file-if-it-already-exist
-if [ -f "$1" ]; then
+if [ -a "$1" ]; then
 	rm "$1"
-	echo "File $1 removed"
+	#echo "File $1 removed"
 fi
 
 }
 
 cleanup () {
 empty -s -o gnu_input "exit\n"
-
 disconnect_device "output"
-
 switch_discoverable_off "output"
-
 exit_bluetoothctl
-
 kill_process
-
 remove_file "input"
 remove_file "output"
+}
+
+
+initialisation () {
+remove_file "data"
+remove_file "$read_from_file_name"
+remove_file "input"
+remove_file "output"
+remove_file "log_empty.log"
+remove_file "log_empty_gnu.log"
 }
 
 read_metadata() {
@@ -68,14 +71,8 @@ read_characteristic "b46b8c16-55d4-4536-9f90-1074de740d29" "output" ""
 
 
 trap cleanup EXIT
-# initial checks
-remove_file "data"
-remove_file "$read_from_file_name"
-remove_file "input"
-remove_file "output"
-remove_file "log_empty.log"
-remove_file "log_empty_gnu.log"
 
+initialisation 
 
 empty -f -i gnu_input -o gnu_output -L log_empty_gnu.log gnuplot -p
 

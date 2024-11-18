@@ -136,12 +136,13 @@ if [ "$uuid" == "$uuid_sample_data" ] || [ "$uuid" == "$uuid_sample_no" ]; then
 	aV=$(echo $attrVal | sed -e 's,[[:blank:]]*$,,g')
 	# https://stackoverflow.com/questions/22727107/how-to-find-the-last-field-using-cut
 	aV=$(echo $aV | rev | cut -d" " -f 1 | rev )
-	echo "characteristic value: $aV"
 	
 	if [[ "$uuid" == "$uuid_sample_no" ]]; then
+		echo "Sample no: $aV"
 		# https://stackoverflow.com/questions/12297820/how-to-append-strings-to-the-same-line-instead-of-creating-a-new-line
 		echo -n "$aV " >> "$save_file_path"
 	else
+		echo "Sample data: $aV"
 		# https://stackoverflow.com/questions/11618696/shell-write-variable-contents-to-a-file
 		echo "$aV" >> "$save_file_path"
 		echo ""
