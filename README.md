@@ -24,3 +24,9 @@ Carrier amplitude: 	"3a5dc305-e506-43ee-8da2-547e5a577886"
 
 Decoder load pct: 	"aa3e90f8-3b7c-48de-a93a-0c9e034cd429"
 
+
+#### Observations
+
+BLE characteristics values are not reset when the same application is run continuously. That is, in the first run, all values are initialised. In the second run, the characteristics hold the last value read by the sensor. Hence, in the current version, it is better to restart the application to ensure all values are reset or we start the bash code after the application starts sampling.
+
+Need to manually delete the input & output file in case of unexpected exit. Also kill the process manually using command line.

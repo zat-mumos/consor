@@ -44,18 +44,30 @@ echo "mac address: " $MAC_ADDRESS
 echo "connecting to device"
 empty -s -o input "connect $MAC_ADDRESS\n"
 
+temp_start=$EPOCHSECONDS
 # Check if the device is connected
 while read -r line; do
     if [[ "$line" == *" Device $MAC_ADDRESS Connected: yes"* ]]; then
 	echo "Connected"
         break
     fi
+    # https://stackoverflow.com/questions/27555727/timeouting-a-while-loop-in-linux-shell-script
+    if (( EPOCHSECONDS-temp_start > 3 )); then
+    	boolean_connect="false"
+    	echo "Retrying due to timeout error ..."
+    	exit_bluetoothctl
+    	kill_process
+    	starting_bluetoothctl 
+    	connect_to_device "$1" "$2" "$3"
+    	break
+    fi
 done < "$file"
-# go to GATT menu
-empty -s -o input "menu gatt\n"
-empty -s -o input "list-attributes \n"
+
+#empty -s -o input "menu gatt\n"
+#empty -s -o input "list-attributes \n"
 }
 
+# Once a characteristic is read, the script exits gatt menu automatically. Hence, each time we need to go to the gatt menu to read any characteristic
 go_to_gatt_menu() {
 empty -s -o input "menu gatt\n"
 empty -s -o input "list-attributes \n"
@@ -66,6 +78,7 @@ read_characteristic() {
 uuid=$1
 file=$2
 save_file_path=$3
+#echo "filepath: $save_file_path"
 
 uuid_sample_no="0d6d433d-ef16-4543-ac24-c6e08841a56e"
 uuid_sample_data="3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1"
@@ -82,7 +95,7 @@ while read -r line; do
         if [ ! -z "${prev}" ]; then
         	attr="${prev}"
         	line2="${lin}"
-        	echo "uuid: $uuid"
+        	#echo "uuid: $uuid"
         fi
         break
     fi
@@ -90,7 +103,7 @@ while read -r line; do
 done < "$file"
 
 attr=$(echo $attr | sed -e 's,^[[:blank:]]*,,g')
-echo "attribute name: ${attr}"
+#echo "attribute name: ${attr}"
 
 empty -s -o input "select-attribute $attr\n"
 
@@ -109,9 +122,9 @@ while read -r line; do
     
     if [[ "$readAttr" == "true" ]]; then
     	attrVal="$line"
-    	echo "attribute value: "
-    	echo "$attrVal"
-    	echo ''
+    	#echo "attribute value: "
+    	#echo "$attrVal"
+    	#echo ''
     	break
     fi
 done < "$file"
@@ -131,7 +144,7 @@ if [ "$uuid" == "$uuid_sample_data" ] || [ "$uuid" == "$uuid_sample_no" ]; then
 	else
 		# https://stackoverflow.com/questions/11618696/shell-write-variable-contents-to-a-file
 		echo "$aV" >> "$save_file_path"
-		echo "$aV" >> "data"
+		echo ""
 	fi
 fi
 }
