@@ -25,6 +25,30 @@ Carrier amplitude: 	"3a5dc305-e506-43ee-8da2-547e5a577886"
 Decoder load pct: 	"aa3e90f8-3b7c-48de-a93a-0c9e034cd429"
 
 
+### Link to mindfield eSense
+https://mindfield-esense.com/ 
+
+### Links to eSense sensor documentation
+1. Skin Response (Skin Resistance Measurement): https://mindfield.de/en/esense-skin-response/
+2. Skin Response (Manual/Handbuch): https://help.mindfield.de/en/skin-response-manual
+
+3. Temperature (Measuring Skin Temperature): https://mindfield.de/en/esense-temperature/
+4. Temperature (Manual/Handbuch): https://help.mindfield.de/en/temperature-manual 
+
+5. Respiration (Breath training): https://mindfield.de/en/esense-respiration/
+6. Respiration (Manual/Handbuch): https://help.mindfield.de/respiration-handbuch
+
+7. Pulse (HRV Biofeedback): https://mindfield.de/en/esense-pulse/
+8. Pulse (Manual/handbuch): https://help.mindfield.de/pulse-handbuch
+
+
+#### More Links on the esense sensors
+1. Comparison of eSense sensors: https://mindfield.de/en/esense-comparison/
+2. Stream eSense data using OSC: https://help.mindfield.de/helpdesk/esense-daten-zu-einem-pc-mac-browser-streamen-esense-web-app-osc#eckb-article-body
+3. Types of electrodes: https://help.mindfield.de/helpdesk/elektrodentypen#eckb-article-body
+4. Possible position of electrodes: https://help.mindfield.de/helpdesk/moegliche-ableitpositionen-der-elektroden#eckb-article-body
+
+
 #### Observations
 
 BLE characteristics values are not reset when the same application is run continuously. That is, in the first run, all values are initialised. In the second run, the characteristics hold the last value read by the sensor. Hence, in the current version, it is better to restart the application to ensure all values are reset or we start the bash code after the application starts sampling.
