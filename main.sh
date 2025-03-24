@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source cmds.sh
+source /home/user/<path to consor>/consor/cmds.sh
 
-read_from_file_name='datafile'
+read_from_file_name='datafile.txt'
 save_filepath="./$read_from_file_name" 
 echo "file: $save_filepath"
 
@@ -20,7 +20,6 @@ fi
 }
 
 cleanup () {
-empty -s -o gnu_input "exit\n"
 disconnect_device "output"
 switch_discoverable_off "output"
 exit_bluetoothctl
@@ -36,7 +35,6 @@ remove_file "$read_from_file_name"
 remove_file "input"
 remove_file "output"
 remove_file "log_empty.log"
-remove_file "log_empty_gnu.log"
 }
 
 read_metadata() {
@@ -74,8 +72,6 @@ trap cleanup EXIT
 
 initialisation 
 
-empty -f -i gnu_input -o gnu_output -L log_empty_gnu.log gnuplot -p
-
 starting_bluetoothctl
 
 connect_to_device "Galaxy Tab S9" "output" "input"
@@ -91,14 +87,18 @@ while true; do
 	IFS=' '
 	for element in "${array_a[@]}"
 	do
-	    if [ "$element" == "0d6d433d-ef16-4543-ac24-c6e08841a56e" ] || [ "$element" == "3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1" ]; then
-	    	read_characteristic "$element" "output" "$save_filepath"
+	    if [ "$element" == "0d6d433d-ef16-4543-ac24-c6e08841a56e" ]; then
+	    	sample_no=$(read_characteristic "$element" "output" "")
+	    elif [ "$element" == "3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1" ]; then
+	    	sample_data=$(read_characteristic "$element" "output" "")
 	    else
 	    	read_characteristic "$element" "output" ""
 	    fi
-	    empty -s -o gnu_input "plot '$read_from_file_name' using 1:2 with linespoints\n"
+	    
 	    go_to_gatt_menu
-
+	
 	done
+	echo $sample_no,$sample_data #>> $save_filepath
+	export var_list="$sample_no,$sample_data"
 done
 

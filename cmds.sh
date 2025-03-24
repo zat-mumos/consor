@@ -11,6 +11,7 @@ empty -s -o input "devices\n"
 }
 
 
+
 #### Get name of device from the list of devices & connect to this device
 connect_to_device() {
 device_name=$1
@@ -67,11 +68,15 @@ done < "$file"
 #empty -s -o input "list-attributes \n"
 }
 
+
+
 # Once a characteristic is read, the script exits gatt menu automatically. Hence, each time we need to go to the gatt menu to read any characteristic
 go_to_gatt_menu() {
 empty -s -o input "menu gatt\n"
 empty -s -o input "list-attributes \n"
 }
+
+
 
 # select attribute, read characteristic value, add it to a file
 read_characteristic() {
@@ -138,17 +143,19 @@ if [ "$uuid" == "$uuid_sample_data" ] || [ "$uuid" == "$uuid_sample_no" ]; then
 	aV=$(echo $aV | rev | cut -d" " -f 1 | rev )
 	
 	if [[ "$uuid" == "$uuid_sample_no" ]]; then
-		echo "Sample no: $aV"
+		#echo "Sample no: $aV"
 		# https://stackoverflow.com/questions/12297820/how-to-append-strings-to-the-same-line-instead-of-creating-a-new-line
-		echo -n "$aV " >> "$save_file_path"
+		echo -n "$aV " #>> "$save_file_path"
 	else
-		echo "Sample data: $aV"
+		#echo "Sample data: $aV"
 		# https://stackoverflow.com/questions/11618696/shell-write-variable-contents-to-a-file
-		echo "$aV" >> "$save_file_path"
-		echo ""
+		echo "$aV" #>> "$save_file_path"
+		#echo ""
 	fi
 fi
 }
+
+
 
 disconnect_device() {
 file=$1
@@ -164,6 +171,7 @@ while read -r line; do
     fi
 done < "$file"
 }
+
 
 
 switch_discoverable_off() {
@@ -184,6 +192,7 @@ done < "$file"
 exit_bluetoothctl() {
 empty -s -o input "exit\n"
 }
+
 
 
 # kill process
