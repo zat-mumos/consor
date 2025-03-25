@@ -145,7 +145,7 @@ if [ "$uuid" == "$uuid_sample_data" ] || [ "$uuid" == "$uuid_sample_no" ]; then
 	if [[ "$uuid" == "$uuid_sample_no" ]]; then
 		#echo "Sample no: $aV"
 		# https://stackoverflow.com/questions/12297820/how-to-append-strings-to-the-same-line-instead-of-creating-a-new-line
-		echo -n "$aV " #>> "$save_file_path"
+		echo -n "$aV" #>> "$save_file_path"
 	else
 		#echo "Sample data: $aV"
 		# https://stackoverflow.com/questions/11618696/shell-write-variable-contents-to-a-file

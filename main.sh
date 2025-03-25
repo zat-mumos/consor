@@ -30,6 +30,8 @@ remove_file "output"
 
 
 initialisation () {
+sample_data=0
+sample_no=0
 remove_file "data"
 remove_file "$read_from_file_name"
 remove_file "input"
@@ -98,7 +100,7 @@ while true; do
 	    go_to_gatt_menu
 	
 	done
-	echo $sample_no,$sample_data #>> $save_filepath
+	echo $sample_no,$sample_data > $save_filepath
 	export var_list="$sample_no,$sample_data"
 done
 

@@ -2,10 +2,8 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
-import subprocess
-from subprocess import run
-import os
-import sys
+
+file_path = "/home/user/<path to consor>/consor/datafile.txt"
 
 class PublishData(Node):
 
@@ -18,13 +16,16 @@ class PublishData(Node):
 
     def timer_callback(self):
         msg=String()
-        output = sys.stdout.readlines()
+        file_ = open(file_path, 'r')
+        output = file_.read()
         dataValue = str(output)
-        msg.data = dataValue#'Hello %d'
+        msg.data = dataValue
         self.pub_.publish(msg)
         self.get_logger().info(f'Publishing: {msg.data}')
         self.i += 1
-    
+        file_.close()
+
+
 def main(args=None):
     rclpy.init(args=args)
     publish_data=PublishData()
