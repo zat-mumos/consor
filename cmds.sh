@@ -57,7 +57,7 @@ while read -r line; do
     	boolean_connect="false"
     	echo "Retrying due to timeout error ..."
     	exit_bluetoothctl
-    	kill_process
+    	kill_bluetoothctl_process
     	starting_bluetoothctl 
     	connect_to_device "$1" "$2" "$3"
     	break
@@ -196,7 +196,7 @@ empty -s -o input "exit\n"
 
 
 # kill process
-kill_process() {
+kill_bluetoothctl_process() {
 VAR1=$(pstree -g | grep bluetoothctl | cut -d '(' -f 3)
 pid=$(echo $VAR1 | cut -d ')' -f 1)
 # https://stackoverflow.com/questions/48261038/shell-script-how-to-check-if-variable-is-null-or-no
