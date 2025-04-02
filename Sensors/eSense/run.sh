@@ -1,11 +1,11 @@
 #!/bin/bash
 
 bash_filepath="/home/user/<path to consor>/consor/main.sh"
-python_filepath="./<path to ros_pub.py>/ros_pub.py"
+python_filepath="./<path to sensor_data.py>/sensor_data.py"
 
 
 kill_python_process(){
-pid_=$(ps aux | grep python3 | grep user | grep ros_pub.py | tr -s ' ' | cut -d ' ' -f 2)
+pid_=$(ps aux | grep python3 | grep user | grep sensor_data.py | tr -s ' ' | cut -d ' ' -f 2)
 # https://stackoverflow.com/questions/48261038/shell-script-how-to-check-if-variable-is-null-or-no
 echo "--------------------- PID: $pid"
 if [[ -n "$pid_" ]]; then
