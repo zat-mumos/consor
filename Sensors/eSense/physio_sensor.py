@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 
 import sys
-from zat_ros2_msgs.msg import SensorData
+from zat_ros2_msgs.msg import PhysioSensor
 
 class SensorDataEsense(Node):
     def __init__(self, 
@@ -25,13 +25,13 @@ class SensorDataEsense(Node):
         self.sample_no_ = sample_no_
         self.sample_data_ = sample_data_
 
-        self.publish_sensor_data_ = self.create_publisher(SensorData, sensor_topic, 10)
+        self.publish_sensor_data_ = self.create_publisher(PhysioSensor, sensor_topic, 10)
         self.timer = self.create_timer(timer_, self.timer_callback)
         
 
     def timer_callback(self):
         try:
-            msg=SensorData()
+            msg=PhysioSensor()
             lines=sys.stdin.readline().strip()
             dataValue = str(lines)
             print(lines)

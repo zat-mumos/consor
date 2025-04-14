@@ -1,11 +1,11 @@
 #!/bin/bash
 
 bash_filepath="/home/user/<path to consor>/consor/main.sh"
-python_filepath="./<path to sensor_data.py>/sensor_data.py"
+python_filepath="./<path to physio_sensor.py>/physio_sensor.py"
 
 
 kill_python_process(){
-pid_=$(ps aux | grep python3 | grep user | grep sensor_data.py | tr -s ' ' | cut -d ' ' -f 2)
+pid_=$(ps aux | grep python3 | grep user | grep physio_sensor.py | tr -s ' ' | cut -d ' ' -f 2)
 # https://stackoverflow.com/questions/48261038/shell-script-how-to-check-if-variable-is-null-or-no
 echo "--------------------- PID: $pid"
 if [[ -n "$pid_" ]]; then
@@ -26,7 +26,7 @@ cd zat_ws
 
 source /opt/ros/foxy/setup.bash
 
-colcon build --packages-select <name of ROS2 package>
+colcon build --packages-select <name of ROS2 package> zat_ros2_msgs
 source install/setup.bash
 
 python3 $python_filepath &
