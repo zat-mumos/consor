@@ -41,27 +41,31 @@ do
     fi
 done
 
-echo "mac address: " $MAC_ADDRESS
-echo "connecting to device"
+echo "connecting to device with MAC address: " $MAC_ADDRESS
+#echo "connecting to device"
 empty -s -o input "connect $MAC_ADDRESS\n"
 
 temp_start=$EPOCHSECONDS
 # Check if the device is connected
 while read -r line; do
+    now=$EPOCHSECONDS
     if [[ "$line" == *" Device $MAC_ADDRESS Connected: yes"* ]]; then
 	echo "Connected"
         break
     fi
     # https://stackoverflow.com/questions/27555727/timeouting-a-while-loop-in-linux-shell-script
-    if (( EPOCHSECONDS-temp_start > 3 )); then
+    #echo "Working to connect ...$now $((EPOCHSECONDS-temp_start))"
+    if (( now-temp_start > 3 )); then
     	boolean_connect="false"
     	echo "Retrying due to timeout error ..."
     	exit_bluetoothctl
     	kill_bluetoothctl_process
-    	starting_bluetoothctl 
+    	starting_bluetoothctl
+    	#echo "$1" 
     	connect_to_device "$1" "$2" "$3"
     	break
     fi
+    #sleep 1
 done < "$file"
 
 #empty -s -o input "menu gatt\n"
