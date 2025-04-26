@@ -1,4 +1,6 @@
-## The eSense repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node
+## Introduction
+
+- The eSense repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node
 
 ### Some of the sensors are:
 
