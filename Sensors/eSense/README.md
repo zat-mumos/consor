@@ -22,21 +22,25 @@
 - change the path accordingly of sourcing in [cmds.sh](cmds.sh)
 
 - change the first parameter device_name where the sensors are connected to the android device
-`
+
+```
 connect_to_device() {
     device_name="$1" output_dir="$2" input_dir="$3"
 }
-`
+```
+
 [**physio_sensor.py**](physio_sensor.py)
 
 - Change the path of the main.sh file correctly:
 
-`
+
+```
 class SensorDataEsense(Node):
     def __init__(self, 
                  **bash_script_path="../main.sh"**
 
-`
+
+```
 
 
 ### Setting up the environment
@@ -44,19 +48,21 @@ class SensorDataEsense(Node):
 - Make sure you have the ros2 environment setup correctly
 - Then you need to build your ros package for the ros2 publisher node
 
-`
+
+```
 source \opt\ros\(version)\setup.bash
 cd ~\consor_ws
 colcon build
-`
+```
+
 
 
 
 ### Important Characteristics and their UUIDs
 
-Sample no: 		"0d6d433d-ef16-4543-ac24-c6e08841a56e"
+- Sample no: 		"0d6d433d-ef16-4543-ac24-c6e08841a56e"
 
-Sample data: 		"3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1"
+- Sample data: 		"3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1"
 
 <!-- Android API Level: 	"24e3bd1c-c366-4cda-950b-2b7c46e4a13d"
 
