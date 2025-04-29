@@ -1,4 +1,4 @@
-#!/usr/bin/python3.8
+#!/usr/bin/python3.10
 
 import rclpy
 from rclpy.node import Node
@@ -6,10 +6,12 @@ from rclpy.node import Node
 import sys
 from zat_ros2_msgs.msg import PhysioSensor
 import subprocess
+import os
+from ament_index_python.packages import get_package_share_directory
 
 class SensorDataEsense(Node):
     def __init__(self, 
-                 bash_script_path="/home/user/<path to consor>/consor/Sensors/eSense/main.sh", 
+                 bash_script_path=None, 
                  sensor_topic: str = '/sensor/esense_data', # ROS topic
                  sample_no: int = 0,
                  sample_data: float = 1e-5,
@@ -17,6 +19,14 @@ class SensorDataEsense(Node):
                  ):
         super().__init__('sensor_data_esense') # ROS node
         
+
+        if bash_script_path==None:
+            package_name = 'physio_sensor'
+            bash_script_path = os.path.join(get_package_share_directory(package_name), 'scripts', 'main.sh')
+
+        self.bash_script_path = bash_script_path
+        self.get_logger().info(f'Bash script path: {self.bash_script_path}')
+
         self.i = 0 # counter
 
         self.declare_parameter('bash_script_path', bash_script_path)
@@ -24,16 +34,16 @@ class SensorDataEsense(Node):
 
         self.sample_no = sample_no
         self.sample_data = sample_data
-        self.bash_script_path = bash_script_path
 
         self.publish_sensor_data_ = self.create_publisher(PhysioSensor, sensor_topic, 10)
-        self.get_logger().info('Starting node for eSense sensor data')
         
         # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
         # Start a subprocess to run the bash script
         self.process = subprocess.Popen(
             self.bash_script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
+
+        self.get_logger().info('Starting node for eSense sensor data')
 
         self.timer = self.create_timer(timer, self.timer_callback)
         
@@ -42,10 +52,12 @@ class SensorDataEsense(Node):
         try:
             msg = PhysioSensor()
             lines = self.process.stdout.readline().strip()
+            # lines = sys.stdin.readline().strip()
             dataValue = str(lines)
+            self.get_logger().info(f'Log: {lines}')
             print(lines)
             self.sample_no = dataValue.split(",")[0]
-            # print('sno: ', self.sample_no_)
+            # print('sno: ', self.sample_no)
             if self.sample_no.isnumeric():
                 self.sample_no = int(self.sample_no)
                 print('Sample no: ', self.sample_no)
@@ -55,7 +67,7 @@ class SensorDataEsense(Node):
                 msg.sample_no = self.sample_no
                 msg.sample_data = self.sample_data
                 self.publish_sensor_data_.publish(msg)
-                self.get_logger().info(f'Publishing: {msg}')
+                self.get_logger().info(f'Pub: {msg}')
                 self.i += 1
 
 

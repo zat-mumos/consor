@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /home/user/<path to consor>/consor/cmds.sh
+source $(dirname "$0")/cmds.sh
 
 remove_file() {
 
@@ -54,9 +54,9 @@ while true; do
 	for element in "${array_a[@]}"
 	do
 	    if [ "$element" == "0d6d433d-ef16-4543-ac24-c6e08841a56e" ]; then
-	    	sample_no=$(read_characteristic "$element" "output" "")
+	    	sampleno=$(read_characteristic "$element" "output" "")
 	    elif [ "$element" == "3cfb298f-3dcb-4be0-b5d4-3cbc0e79cab1" ]; then
-	    	sample_data=$(read_characteristic "$element" "output" "")
+	    	sampledata=$(read_characteristic "$element" "output" "")
 	    else
 	    	read_characteristic "$element" "output" ""
 	    fi
@@ -64,6 +64,6 @@ while true; do
 	    go_to_gatt_menu
 	
 	done
-	echo $sample_no,$sample_data >&1
+	echo $sampleno,$sampledata >&1
 done
 

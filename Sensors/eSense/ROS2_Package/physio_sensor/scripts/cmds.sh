@@ -41,8 +41,7 @@ do
     fi
 done
 
-echo "connecting to device with MAC address: " $MAC_ADDRESS
-#echo "connecting to device"
+# 	echo "connecting to device with MAC address: " $MAC_ADDRESS
 empty -s -o input "connect $MAC_ADDRESS\n"
 
 temp_start=$EPOCHSECONDS
