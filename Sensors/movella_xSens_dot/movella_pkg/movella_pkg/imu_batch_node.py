@@ -1,103 +1,177 @@
-#!/usr/bin/env python3
+import sys
+import os
 import rclpy
 from rclpy.node import Node
-from zat_ros2_msgs.msg import Imu
-from std_msgs.msg import String
-import json
-from threading import Lock
+from rclpy.logging import get_logger
+from std_msgs.msg import String  # Publish JSON as String messages
+from zat_ros2_msgs.msg import MovellaData, MovellaImu, MovellaSensor
+from builtin_interfaces.msg import Time
 
-class ImuBatchNode(Node):
+sys.path.append(os.path.expanduser('~/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+
+
+import movelladot_pc_sdk  # Movella SDK
+from xdpchandler import XdpcHandler
+
+class MovellabatchNode(Node):
     def __init__(self):
-        super().__init__('imu_batch_node')
+        super().__init__('movella_batch_node')
 
-        # Discover all topics of type Imu
-        all_topics = self.get_topic_names_and_types()
-        self.imu_topics = [
-            name for name, types in all_topics
-            if 'zat_ros2_msgs/msg/Imu' in types
-        ]
-        if not self.imu_topics:
-            self.get_logger().error('No IMU topics found—run MovellaNode first.')
+        self.logger = get_logger(self.get_name())
+        self.xdpcHandler = XdpcHandler()
+
+        # Xpdchandler check initialization
+
+        if not self.xdpcHandler.initialize():
+            self.xdpcHandler.cleanup()
+            self.get_logger().error('Failed to initialize the XdpcHandler. Exiting...')
+            rclpy.shutdown()
             return
 
-        self.get_logger().info(f"Subscribing to: {self.imu_topics}")
+        # Movella DOT device scanning and connection
 
-        # Thread‐safe buffer: topic → list of dicts
-        self._lock = Lock()
-        self._buffer = {topic: [] for topic in self.imu_topics}
+        self.xdpcHandler.scanForDots()
 
-        # Create one subscriber per sensor‐topic
-        for topic in self.imu_topics:
-            self.create_subscription(
-                Imu,
-                topic,
-                lambda msg, t=topic: self._imu_callback(msg, t),
-                10
-            )
+        if len(self.xdpcHandler.detectedDots()) == 0:
+            self.get_logger().error("No Movella DOT device(s) found. Aborting.")
+            self.xdpcHandler.cleanup()
+            rclpy.shutdown()
+            return
+        
+        # BLE connection
 
-        # Publisher for the 3-second batch
-        self._batch_pub = self.create_publisher(String, 'imu_batch', 10)
+        self.xdpcHandler.connectDots()
 
-        # Timer: every 3 s, publish & clear buffer
-        self.create_timer(3.0, self._timer_callback)
+        # change the streaming rate to 10 hz
+        for device in self.xdpcHandler.connectedDots():
+            if device.setOutputRate(10):
+                self.get_logger().info("Successfully set onboard recording rate")
+            else:
+                self.get_logger().error("Setting onboard recording rate failed!")
 
-    def _imu_callback(self, msg: Imu, topic: str):
-        """
-        Called on each incoming Imu. Timestamp it here,
-        then stash roll/pitch/yaw into our buffer.
-        """
-        now = self.get_clock().now().to_msg()
-        entry = {
-            'timestamp': {
-                'sec':  now.sec,
-                'nsec': now.nanosec
-            },
-            'roll':  msg.roll,
-            'pitch': msg.pitch,
-            'yaw':   msg.yaw,
-            # if your Imu msg has accel/mag/etc, add those too
-        }
-        with self._lock:
-            self._buffer[topic].append(entry)
+        if len(self.xdpcHandler.connectedDots()) == 0:
+            self.get_logger().error("Could not connect to any Movella DOT device(s). Aborting.")
+            self.xdpcHandler.cleanup()
+            rclpy.shutdown()
+            return
 
-    def _timer_callback(self):
-        """Every 3 s, dump and clear the buffer as one JSON message."""
-        with self._lock:
-            total = sum(len(v) for v in self._buffer.values())
-            if total == 0:
-                self.get_logger().debug('No samples this window; skipping.')
-                return
+        # setting up a single publisher for sending data from the buffer
 
-            batch = {
-                'window_end': {
-                    'sec':  self.get_clock().now().to_msg().sec,
-                    'nsec': self.get_clock().now().to_msg().nanosec
-                },
-                'data': self._buffer.copy()
-            }
+        for dev in self.xdpcHandler.connectedDots():
+            mac = dev.portInfo().bluetoothAddress()
 
-            # reset for next period
-            self._buffer = {topic: [] for topic in self.imu_topics}
+            for prof in dev.getAvailableFilterProfiles():
+                self.get_logger().info(f"Profile: {prof.label()}")
 
-        msg = String()
-        msg.data = json.dumps(batch)
-        self._batch_pub.publish(msg)
-        self.get_logger().info(
-            f'Published batch with {total} samples '
-            f'across {len(self.imu_topics)} topics.'
-        )
+            if not dev.setOnboardFilterProfile("General"):
+                self.get_logger().error("Could not set filter profile")
+
+            if not dev.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler):
+                self.get_logger().error("Could not start measurement mode")
+
+        
+        # buffer batch publisher
+        self.buffer_pub = self.create_publisher(MovellaData, '/movella/data', 100000)
+
+
+        self.buffer = { dev.portInfo().bluetoothAddress(): [] for dev in self.xdpcHandler.connectedDots() }
+
+        # printing the buffer
+        self.get_logger().info(f"Buffer: {self.buffer}")
+
+        
+
+        self.buffer_duration_ms = 3000
+        # self.start_time = self.get_clock().now().to_msg()
+        # self.logger.info(f"data collection from {self.start_time} for {self.buffer_duration} sec")
+
+        self.record__batch_data()
+
+    def record__batch_data(self):
+        orientationResetDone = False
+
+        now_msg = self.get_clock().now()
+
+        duration_time = rclpy.duration.Duration(nanoseconds=self.buffer_duration_ms * 1e6)
+        starttime = now_msg
+
+        while rclpy.ok():
+            if self.xdpcHandler.packetsAvailable():
+                for dev in self.xdpcHandler.connectedDots():
+                    mac = dev.portInfo().bluetoothAddress()
+                    pkt = self.xdpcHandler.getNextPacket(dev.portInfo().bluetoothAddress())
+
+                    if pkt.containsOrientation():
+                        euler = pkt.orientationEuler()
+                        mac = dev.portInfo().bluetoothAddress()
+
+                        imu_msg = MovellaImu()
+                        imu_msg.header.stamp = self.get_clock().now().to_msg()
+                        imu_msg.roll = euler.roll()
+                        imu_msg.pitch = euler.pitch()
+                        imu_msg.yaw = euler.yaw()
+
+                        self.buffer[mac].append(imu_msg)
+
+                        
+                        # print start time
+                        # self.get_logger().info(f"Time: {self.get_clock().now().to_msg()}")
+
+
+
+
+                    if self.get_clock().now()- starttime > duration_time:
+                        # publish the buffer
+
+                        batch = MovellaData()
+                        batch.header.stamp = self.get_clock().now().to_msg()
+                        # batch.imu_data.header.stamp = self.get_clock().now().to_msg()
+                        batch.data = []
+
+                        # print the buffer items
+                        # self.get_logger().info(f"Buffer items: {self.buffer.items()}")
+
+                        for mac, data in self.buffer.items():
+                            sensor_msg = MovellaSensor()
+                            sensor_msg.id = mac
+                            sensor_msg.data = data
+                            batch.data.append(sensor_msg)
+                        
+                        # publish the batch
+                        self.buffer_pub.publish(batch)
+
+
+
+                        
+                        for k in self.buffer:
+
+                                                    # check if the buffer mac address value is empty
+
+                            if not self.buffer[k]:
+                                self.get_logger().info(f"Buffer for {mac} is empty")
+
+                            else:
+                    
+                            # print the size of the buffer
+                                self.get_logger().info(f"Buffer for {mac} size: {len(self.buffer[k])}")
+
+                            self.buffer[k].clear()
+                    
+                        # reset the start time
+                        starttime = self.get_clock().now()
+    
+
 
 def main():
     rclpy.init()
-    node = ImuBatchNode()
-    if not node.imu_topics:
-        return
+
+    node = MovellabatchNode()
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        pass
+        node.stop_measurement()
     finally:
-        node.destroy_node()
         rclpy.shutdown()
 
 if __name__ == '__main__':
