@@ -7,11 +7,13 @@ from std_msgs.msg import String  # Publish JSON as String messages
 from zat_ros2_msgs.msg import MovellaData, MovellaImu, MovellaSensor
 from builtin_interfaces.msg import Time
 
-sys.path.append(os.path.expanduser('~/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+# sys.path.append(os.path.expanduser('~/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+
+
 
 
 import movelladot_pc_sdk  # Movella SDK
-from xdpchandler import XdpcHandler
+from movella_pkg.xdpchandler import XdpcHandler
 
 class MovellabatchNode(Node):
     def __init__(self):
@@ -42,9 +44,18 @@ class MovellabatchNode(Node):
 
         self.xdpcHandler.connectDots()
 
+        self.declare_parameter('output_rate', 10.0)
+
+        output_rate = int(self.get_parameter('output_rate').get_parameter_value().double_value)
+
         # change the streaming rate to 10 hz
         for device in self.xdpcHandler.connectedDots():
-            if device.setOutputRate(10):
+
+            # if device.setOutputRate(10):
+        
+        # according to the launch file
+
+            if device.setOutputRate(output_rate):
                 self.get_logger().info("Successfully set onboard recording rate")
             else:
                 self.get_logger().error("Setting onboard recording rate failed!")
@@ -54,6 +65,9 @@ class MovellabatchNode(Node):
             self.xdpcHandler.cleanup()
             rclpy.shutdown()
             return
+        
+        else:
+            self.get_logger().info(f"Connected to {len(self.xdpcHandler.connectedDots())} devices ")
 
         # setting up a single publisher for sending data from the buffer
 
@@ -71,7 +85,14 @@ class MovellabatchNode(Node):
 
         
         # buffer batch publisher
-        self.buffer_pub = self.create_publisher(MovellaData, '/movella/data', 100000)
+        # self.buffer_pub = self.create_publisher(MovellaData, '/movella/data', 100000)
+
+        # imu data publisher topic through launch file
+
+        buffer_topic = self.get_parameter('buffer_topic').get_parameter_value().string_value
+
+        self.buffer_pub = self.create_publisher(MovellaData, buffer_topic, 100000)
+
 
 
         self.buffer = { dev.portInfo().bluetoothAddress(): [] for dev in self.xdpcHandler.connectedDots() }
@@ -79,9 +100,14 @@ class MovellabatchNode(Node):
         # printing the buffer
         self.get_logger().info(f"Buffer: {self.buffer}")
 
-        
 
-        self.buffer_duration_ms = 3000
+
+        buffer_duration_ms = self.get_parameter('buffer_duration').get_parameter_value().integer_value
+
+        # self.buffer_duration_ms = 
+        
+        self.buffer_duration_ms = buffer_duration_ms
+
         # self.start_time = self.get_clock().now().to_msg()
         # self.logger.info(f"data collection from {self.start_time} for {self.buffer_duration} sec")
 
