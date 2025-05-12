@@ -6,10 +6,18 @@
 - Major focus is to simplify the integration of the sensor network with ROS ecosystem giving ROS Topics as endpoints for further integration 
 
 
+### Repository branches
+
+- main: Consists of the most recent code for eSense and Movella sensors
+
+The current requirement is to publish the sensor data to a ROS node and this code exists in the *main* branch.
+
+
 ### Compatibility
 - **Supported Sensors**: Compatible with eSense sensor Network 
-- **ROS Compatibility**: Focus in on ROS 2 (Foxy)
+- **ROS Compatibility**: Compatible with ROS2 (foxy, humble)
 - **Customizable**: Extendable to support additional sensors
+
 
 ### Important Notes
 - Make sure to start the specific mode of communication for the required sensors (e.g. WiFi, Bluetooth, etc.)
@@ -19,10 +27,12 @@
 - Use the correct topic names and message types for your application (Refer specific sensor Readme!)
 - Test the bridge thoroughly in a controlled environment before deploying it
 
+
 ### Development in Pipeline
 
 - Sensor integration with IMU sensors ([Movella Xsens DOT] (https://www.movella.com/products/wearables/movella-dot) )
 - Sensor integration with pulse sensor
+
 
 ### Known Issues
 - TBD
