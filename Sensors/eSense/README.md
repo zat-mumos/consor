@@ -1,9 +1,15 @@
-## Introduction
+# Introduction
 
 - The eSense repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node.
 - The ROS2 package for publishing eSense sensor data is 'physio_sensor'.
 
-## physio_sensor Package
+#### eSense folder contents
+
+- more_info: Includes any other documentation such as screenshots, etc
+- physio_sensor: ROS2 package for eSense
+
+
+# physio_sensor Package
 
 ### Requirements/Dependencies
 
@@ -13,7 +19,7 @@
 
 ### Installation
 
-#### 'empty' package
+##### 'empty' package
 
 - Download the package using (https://sourceforge.net/projects/empty/) or use an existing/already downloaded zip file of the empty package
 - The code is tested with empty-0.6.23c 
@@ -31,7 +37,7 @@
     - or `empty -v` to see the version of empty that is installed
 
 
-#### ROS2 packages
+##### ROS2 packages
 
 - Create a ROS2 workspace using `mkdir -p zat_ws/src` or `cd zat_ws/src` if using an existing ROS workspace
 - In src, download consor repository and zat_ros2_msgs package
@@ -39,9 +45,9 @@
 
 ### Usage/Steps
 
-#### Steps to run the eSense android application
+##### Steps to run the eSense android application
 
-- Name of the working eSense application: **eSense_sdk_2** 
+- Name of the working eSense application: ***eSense_sdk_2*** 
 - Open the application on the android device. Ensure that it is running. 
 - To test the application, follow the steps:
     - Set the sampling rate (to 1 or 2 Hz for simplicity)
@@ -50,11 +56,11 @@
     - Click stop sampling to stop the sampling. 
 
 
-#### Steps to run the 'physio_sensor' package
+##### Steps to run the 'physio_sensor' package
 
 - Once the application is set, we can run the ROS2 package.
 - Open a terminal
-- In the respective ROS2 workspace (e.g. zat_ws1), `source/opt/humble/setup.bash`
+- In the respective ROS2 workspace (e.g. zat_ws1), `source /opt/ros/humble/setup.bash`
 - `colcon build`
 - `source install/setup.bash`
 - `ros2 launch physio_sensor launch.py`
@@ -62,14 +68,14 @@
 - The andoid device on executing ros2 launch may show a dialog box asking to pair with the system. Allow pairing. Then, the data is transferred and gets published. 
 
 
-#### Notes
+##### Notes
 
 - After ros2 launch, there can be a delay where the system is trying to connect to the Bluetooth android device.
 - Ensure permissions are provided to the android application
 - There are no hard coded paths anywhere in the code and should work on any system
 
 
-#### Troubleshooting
+##### Troubleshooting
 
 - If the package does not build using colcon build, check 
     - whether consor is downloaded in *_ws/src
