@@ -1,11 +1,18 @@
 # Introduction
 
-- The eSense repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node.
-- The ROS2 package for publishing eSense sensor data is 'physio_sensor'.
+- The eSense sensors consists of Skin response, temperature, respiration and pulse sensors. For more information, refer to the [Wiki](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/consor/-/wikis/home/eSense/Consor-Vital-Information) page
+- The hardware setup for these sensors are as follows:
+
+![eSense Hardware Setup](Sensors/eSense/more_info/Images/eSense_HardwareSetup.png)
+
+<br>
+
+- This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node.
+- The ROS2 package for publishing eSense sensor data is *physio_sensor*.
 
 #### eSense folder contents
 
-- more_info: Includes any other documentation such as screenshots, etc
+- more_info: Includes any other documentation such as screenshots, images etc
 - physio_sensor: ROS2 package for eSense
 
 
@@ -13,9 +20,16 @@
 
 ### Requirements/Dependencies
 
-- zat_ros2_msgs
-- 'empty' package should be installed on the system
-- Bluetooth must be functioning and switched on 
+- *zat_ros2_msgs*
+- *empty* should be installed on the system. (Refer below to section Installation: 'empty' package for steps to install this package.)
+- Bluetooth must be functioning and switched on (on the system and the Android device)
+
+### Tested environment 
+
+- Ubuntu 20.04, 22.04
+- ROS2 (foxy, humble)
+- Python 3.8 or higher
+- System Bluetooth version 5.2 & Android Bluetooth version 5.3
 
 ### Installation
 
@@ -23,14 +37,14 @@
 
 - Download the package using (https://sourceforge.net/projects/empty/) or use an existing/already downloaded zip file of the empty package
 - The code is tested with empty-0.6.23c 
-- Extract the zip folder for the `empty` package. Move this folder to `home` directory
+- Extract the zip folder for the *empty* package. Move this folder to **home** directory
 - Open a terminal
 - `cd empty-0.6.23c`
 - `make`
 - `sudo make install`
 
 
-- To check if `empty` is installed, 
+- To check if **empty** is installed, 
     - Open a terminal
     - either use `man empty` to see the manual pages for empty
     - or `which empty` to see the location where empty is installed
@@ -39,8 +53,8 @@
 
 ##### ROS2 packages
 
-- Create a ROS2 workspace using `mkdir -p zat_ws/src` or `cd zat_ws/src` if using an existing ROS workspace
-- In src, download consor repository and zat_ros2_msgs package
+- Create a ROS2 workspace using `mkdir -p zat_ws/src` or if a ROS2 workspace already exists use `cd zat_ws/src` 
+- In src, download **consor** repository and **zat_ros2_msgs** package
 
 
 ### Usage/Steps
@@ -48,7 +62,8 @@
 ##### Steps to run the eSense android application
 
 - Name of the working eSense application: ***eSense_sdk_2*** 
-- Open the application on the android device. Ensure that it is running. 
+- Ensure *Nearby Devices* permissions are granted to the eSense application since the communication happens via Bluetooth.
+- Open the application on the android device.  
 - To test the application, follow the steps:
     - Set the sampling rate (to 1 or 2 Hz for simplicity)
     - Set sensor type to any sensor (If not using any sensor, then set the sensor type to a simulator e.g. tempSimulator)
@@ -79,12 +94,14 @@
 
 - If the package does not build using colcon build, check 
     - whether consor is downloaded in *_ws/src
-    - whether zat_ros2_msgs is downloaded in the same folder as consor
+    - whether zat_ros2_msgs is downloaded in the same folder as consor (i.e., in *_ws/src)
 
 
 - If there is no output after ros2 launch, check
     - whether Bluetooth is switched on, in the system and on the android device
     - whether the name of the android device (currently line: 44 in main.sh) is correctly mentioned in the main.sh (Location: physio_sensor/scripts/main.sh)
     - whether the correct android application is in use (Name of the app: eSense_sdk_2 or eSense SDK 2 Demo)
-    - whether `empty` package is installed on the system
+    - whether *empty* package is installed on the system (refer to above section Installation: 'empty' package)
 
+
+- If the eSense_SDK_2 application does not open, go to the app settings on the android device and enable *Nearby Devices* permissions.
