@@ -66,6 +66,7 @@ class SensorDataEsense(Node):
                 print('Sample data: ', self.sample_data)
                 msg.sample_no = self.sample_no
                 msg.sample_data = self.sample_data
+                msg.header.stamp = self.get_clock().now().to_msg()
                 self.publish_sensor_data_.publish(msg)
                 self.get_logger().info(f'Pub: {msg}')
                 self.i += 1
