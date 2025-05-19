@@ -15,34 +15,45 @@ empty -s -o input "devices\n"
 #### Get name of device from the list of devices & connect to this device
 connect_to_device() {
 device_name=$1
+fixed_mac_address=$4
+boolean_mac_address="false"
 # https://unix.stackexchange.com/questions/256144/read-a-file-line-by-line-and-if-condition-is-met-continue-reading-till-next-cond
 file=$2
 IFS='\n'
-INPUT=$3
-while read -r line; do
-    if [[ $line == *"$device_name"* ]] ; then
+
+while read -r line2; do
+	IFS='\n'
+    if [[ $line2 == *"$device_name"* ]] ; then  # If device name found
         printline="yes"
-        INPUT=$line
-        break        
-    fi
+
+		echo "Input:  $line2"
+
+		#### Get the MAC address from the line (containing the device name) extracted earlier 
+		# https://stackoverflow.com/questions/10586153/how-to-split-a-string-into-an-array-in-bash
+		IFS=' ' read -r -a array <<< "$line2"
+		for element in "${array[@]}"
+		do
+			# https://stackoverflow.com/questions/4260467/what-is-a-regular-expression-for-a-mac-address
+			# https://stackoverflow.com/questions/21112707/check-if-a-string-matches-a-regex-in-bash-script
+			if [[ "$element" =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ && "$element" != "$fixed_mac_address" ]]; then # get mac address & check if it is not fixed mac address
+				MAC_ADDRESS=$element
+				boolean_mac_address="true"
+				echo "MAC_ADDR: $MAC_ADDRESS"
+				break
+			fi
+		done
+	fi
+
+	if [[ "$boolean_mac_address" == "true" ]]; then # If random Mac address found, exit loop
+		break
+	fi
 done < "$file"
 
-echo "Input: " $INPUT
-
-#### Get the MAC address from the line (containing the device name) extracted earlier 
-# https://stackoverflow.com/questions/10586153/how-to-split-a-string-into-an-array-in-bash
-IFS=' ' read -r -a array <<< "$INPUT"
-for element in "${array[@]}"
-do
-    # https://stackoverflow.com/questions/4260467/what-is-a-regular-expression-for-a-mac-address
-    # https://stackoverflow.com/questions/21112707/check-if-a-string-matches-a-regex-in-bash-script
-    if [[ "$element" =~ ^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$ ]]; then
-        MAC_ADDRESS=$element
-    fi
-done
-
-# 	echo "connecting to device with MAC address: " $MAC_ADDRESS
+echo "connecting to device with MAC address: " $MAC_ADDRESS
 empty -s -o input "connect $MAC_ADDRESS\n"
+
+# Wait for a second to allow the device to connect to the system
+sleep 1
 
 temp_start=$EPOCHSECONDS
 # Check if the device is connected
@@ -60,15 +71,11 @@ while read -r line; do
     	exit_bluetoothctl
     	kill_bluetoothctl_process
     	starting_bluetoothctl
-    	#echo "$1" 
-    	connect_to_device "$1" "$2" "$3"
+    	connect_to_device "$1" "$2" "$3" "$4"
     	break
     fi
-    #sleep 1
 done < "$file"
 
-#empty -s -o input "menu gatt\n"
-#empty -s -o input "list-attributes \n"
 }
 
 

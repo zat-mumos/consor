@@ -40,7 +40,7 @@ initialisation
 
 starting_bluetoothctl
 
-connect_to_device "Galaxy Tab S9" "output" "input"
+connect_to_device "Galaxy Tab S9" "output" "input" "<Device MAC Address>"
 
 go_to_gatt_menu
  
