@@ -12,14 +12,14 @@ def generate_launch_description():
 
     esense_sensor_arg = DeclareLaunchArgument(
         'esense_topic',
-        default_value='/sensor/esense_data',
+        default_value='/sensor/esense/data',
         description='Sample no and data from esense sensors'
     )
 
     esense_sensor_timer = DeclareLaunchArgument(
         'esense_timer',
-        default_value='0.5',
-        description='ROS node timer'
+        default_value='2.0',
+        description='Buffer time for sample collection'
     )
     
     esense_bash_script_path = DeclareLaunchArgument(
