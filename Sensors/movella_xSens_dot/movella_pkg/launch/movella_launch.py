@@ -11,7 +11,7 @@ def generate_launch_description():
 
     imu_topic_arg = DeclareLaunchArgument(
     'imu_topic',
-    default_value='movella/imu_data',
+    default_value='/sensor/movella/imu_data',
     description='Movella IMU data publisher topic'
     )
 
@@ -25,7 +25,7 @@ def generate_launch_description():
 
     output_rate_arg = DeclareLaunchArgument(
         'output_rate',
-        default_value='30',
+        default_value='1',
         description='Output rate (Hz) for publishing IMU data'
     )
 

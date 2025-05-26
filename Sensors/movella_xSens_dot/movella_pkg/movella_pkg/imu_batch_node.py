@@ -44,9 +44,12 @@ class MovellabatchNode(Node):
 
         self.xdpcHandler.connectDots()
 
-        self.declare_parameter('output_rate', 10.0)
+        self.declare_parameter('output_rate', 1)
 
-        output_rate = int(self.get_parameter('output_rate').get_parameter_value().double_value)
+        self.declare_parameter('imu_topic', '/sensor/movella/imu_data')
+        self.declare_parameter('buffer_duration', 3000)  # in milliseconds
+
+        output_rate = int(self.get_parameter('output_rate').value)
 
         # change the streaming rate to 10 hz
         for device in self.xdpcHandler.connectedDots():
@@ -89,7 +92,7 @@ class MovellabatchNode(Node):
 
         # imu data publisher topic through launch file
 
-        buffer_topic = self.get_parameter('buffer_topic').get_parameter_value().string_value
+        buffer_topic = self.get_parameter('imu_topic').value
 
         self.buffer_pub = self.create_publisher(MovellaData, buffer_topic, 100000)
 
@@ -102,7 +105,7 @@ class MovellabatchNode(Node):
 
 
 
-        buffer_duration_ms = self.get_parameter('buffer_duration').get_parameter_value().integer_value
+        buffer_duration_ms = self.get_parameter('buffer_duration').value
 
         # self.buffer_duration_ms = 
         
@@ -188,8 +191,8 @@ class MovellabatchNode(Node):
     
 
 
-def main():
-    rclpy.init()
+def main(args=None):
+    rclpy.init(args=args)
 
     node = MovellabatchNode()
 
@@ -198,7 +201,8 @@ def main():
     except KeyboardInterrupt:
         node.stop_measurement()
     finally:
+        node.destroy_node()
         rclpy.shutdown()
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main(args=sys.argv))
