@@ -19,5 +19,10 @@ else
     exit 1
 fi
 
-pip install "$WHEEL_PATH"
+sudo apt update && sudo apt install -y libsuitesparse-dev
+
+pip3 install --user pynput
+
+pip3 install "$WHEEL_PATH"
+
 
