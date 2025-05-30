@@ -14,6 +14,7 @@ from builtin_interfaces.msg import Time
 
 import movelladot_pc_sdk  # Movella SDK
 from movella_pkg.xdpchandler import XdpcHandler
+from collections import defaultdict
 
 class MovellabatchNode(Node):
     def __init__(self):
@@ -96,9 +97,9 @@ class MovellabatchNode(Node):
 
         self.buffer_pub = self.create_publisher(MovellaData, buffer_topic, 100000)
 
+        self.buffer = defaultdict(list)
 
-
-        self.buffer = { dev.portInfo().bluetoothAddress(): [] for dev in self.xdpcHandler.connectedDots() }
+        # self.buffer = { dev.portInfo().bluetoothAddress(): [] for dev in self.xdpcHandler.connectedDots() }
 
         # printing the buffer
         self.get_logger().info(f"Buffer: {self.buffer}")
@@ -172,21 +173,24 @@ class MovellabatchNode(Node):
 
 
                         
-                        for k in self.buffer:
+                        # for k in self.buffer:
 
-                                                    # check if the buffer mac address value is empty
+                        #                             # check if the buffer mac address value is empty
 
-                            if not self.buffer[k]:
-                                self.get_logger().info(f"Buffer for {mac} is empty")
+                        #     if not self.buffer[k]:
+                        #         self.get_logger().info(f"Buffer for {mac} is empty")
 
-                            else:
+                        #     else:
                     
-                            # print the size of the buffer
-                                self.get_logger().info(f"Buffer for {mac} size: {len(self.buffer[k])}")
+                        #     # print the size of the buffer
+                        #         self.get_logger().info(f"Buffer for {mac} size: {len(self.buffer[k])}")
 
-                            self.buffer[k].clear()
+                        #     self.buffer[k].clear()
                     
                         # reset the start time
+                        self.buffer = defaultdict(list)
+                        self.get_logger().info(f"Buffer cleared after {self.buffer_duration_ms} ms")
+
                         starttime = self.get_clock().now()
     
 
