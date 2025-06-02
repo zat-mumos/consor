@@ -13,7 +13,7 @@ def generate_launch_description():
     esense_sensor_arg = DeclareLaunchArgument(
         'esense_topic',
         default_value='/sensor/esense/data',
-        description='Sample no and data from esense sensors'
+        description='Sample data and timestamp from esense sensors'
     )
 
     esense_sensor_timer = DeclareLaunchArgument(
@@ -25,7 +25,7 @@ def generate_launch_description():
     esense_bash_script_path = DeclareLaunchArgument(
        'esense_bash_script_path',
        default_value=os.path.join(get_package_share_directory(package_name), 'scripts', 'main.sh'),
-       description='Path to main.sh bash script for esense sensors'
+       description='Path to the main bash script for esense sensors'
    )
 
     physiosensor_node = Node(

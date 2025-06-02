@@ -1,6 +1,10 @@
 #!/bin/bash
 
 starting_bluetoothctl() {
+# Includes steps to be run at the beginning
+# Arguments:
+#			None
+
 empty -f -i input -o output -L log_empty.log bluetoothctl
 empty -s -o input "power on\n"
 empty -s -o input "discoverable on\n"
@@ -12,8 +16,14 @@ empty -s -o input "devices\n"
 
 
 
-#### Get name of device from the list of devices & connect to this device
 connect_to_device() {
+# Get MAC address of the device & connect to this device
+# Arguments:
+#		- device_name: name of the device that is advertised while scanning for Bluetooth devices (e.g. "Galaxy Tab S9")
+# 		- file: input fifo for empty (i.e., "input")
+# 		- output: output fifo for empty (i.e., "output")
+# 		- fixed_mac_address: the fixed MAC address of the device mentioned in variable device_name (e.g., A1:2B:3C:4D:5E:F6)
+
 device_name=$1
 fixed_mac_address=$4
 boolean_mac_address="false"
@@ -80,16 +90,24 @@ done < "$file"
 
 
 
-# Once a characteristic is read, the script exits gatt menu automatically. Hence, each time we need to go to the gatt menu to read any characteristic
 go_to_gatt_menu() {
+# Includes steps to go to the gatt_menu. Once a characteristic is read, the script exits gatt menu automatically. Hence, each time we need to go to the gatt menu to read any characteristic
+# Arguments:
+# 			None
+
 empty -s -o input "menu gatt\n"
 empty -s -o input "list-attributes \n"
 }
 
 
 
-# select attribute, read characteristic value, add it to a file
 read_characteristic() {
+# Includes steps to select attribute and read characteristic value. This value can also be saved to a file if needed.
+# Arguments:
+# 		- uuid: id of characteristic to be read (e.g. 0d6d433d-ef16-4543-ac24-c6e08841a56e)
+# 		- file: input fifo for empty (i.e., "input")
+#		- save_file_path: path of the file where the characteristic is to be read, leave empty ("") if not to be saved
+
 uuid=$1
 file=$2
 save_file_path=$3
@@ -168,6 +186,10 @@ fi
 
 
 disconnect_device() {
+# Includes steps to disconnect device
+# Arguments:
+# 			file: output fifo for empty (i.e., "output")
+
 file=$1
 
 empty -s -o input "back\n"
@@ -185,6 +207,10 @@ done < "$file"
 
 
 switch_discoverable_off() {
+# Includes steps to switch off the visibility/discoverability of this system to other devices
+# Arguments:
+# 			file: output fifo for empty (i.e., "output")
+
 file=$1
 
 empty -s -o input "discoverable off\n"
@@ -200,6 +226,10 @@ done < "$file"
 
 
 exit_bluetoothctl() {
+# Include steps to exit bluetoothctl
+# Arguments:
+# 			None
+
 empty -s -o input "exit\n"
 }
 
@@ -207,6 +237,10 @@ empty -s -o input "exit\n"
 
 # kill process
 kill_bluetoothctl_process() {
+# Include steps to kill existing bluetooth process using process id
+# Arguments:
+#			None
+
 VAR1=$(pstree -g | grep bluetoothctl | cut -d '(' -f 3)
 pid=$(echo $VAR1 | cut -d ')' -f 1)
 # https://stackoverflow.com/questions/48261038/shell-script-how-to-check-if-variable-is-null-or-no

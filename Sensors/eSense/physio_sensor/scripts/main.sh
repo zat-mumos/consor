@@ -3,8 +3,10 @@
 source $(dirname "$0")/cmds.sh
 
 remove_file() {
-
 # Remove file if already exists
+# Arguments: 
+#		- The name of the file to be removed
+
 # https://stackoverflow.com/questions/31318068/shell-script-to-remove-a-file-if-it-already-exist
 if [ -a "$1" ]; then
 	rm "$1"
@@ -14,6 +16,10 @@ fi
 }
 
 cleanup () {
+# Includes steps to be run on keyboard interrupt
+# Arguments:
+#			None
+
 disconnect_device "output"
 switch_discoverable_off "output"
 exit_bluetoothctl
@@ -24,6 +30,10 @@ remove_file "output"
 
 
 initialisation () {
+# Includes steps to initialise variables and remove files from the previous run
+# Arguments:
+# 			None
+
 sample_data=0
 sample_no=0
 remove_file "data"
