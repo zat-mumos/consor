@@ -20,6 +20,17 @@ class SensorDataEsense(Node):
                  ):
         super().__init__('sensor_data_esense') # ROS node
         
+        self.i = 0 # counter
+
+        # Declare parameters
+        self.declare_parameter('esense_topic', sensor_topic)
+        self.declare_parameter('esense_bash_script_path', bash_script_path)
+        self.declare_parameter('esense_timer', buffer)
+        
+        # Get parameter values
+        buffer = self.get_parameter('esense_timer').value
+        bash_script_path = self.get_parameter('esense_bash_script_path').value
+        sensor_topic = self.get_parameter('esense_topic').value
 
         if bash_script_path==None:
             package_name = 'physio_sensor'
@@ -28,12 +39,6 @@ class SensorDataEsense(Node):
         self.bash_script_path = bash_script_path
         self.get_logger().info(f'Bash script path: {self.bash_script_path}')
 
-        self.i = 0 # counter
-
-        self.declare_parameter('esense_topic', sensor_topic)
-        self.declare_parameter('esense_bash_script_path', bash_script_path)
-        self.declare_parameter('esense_timer', buffer)
-        
         self.batch_time = buffer
 
         self.sample_no = sample_no
