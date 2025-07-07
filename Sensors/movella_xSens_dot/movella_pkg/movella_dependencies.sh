@@ -19,6 +19,9 @@ else
     exit 1
 fi
 
+# dependencies installation for movella dot sdk
+sudo apt update && sudo apt install -y libsuitesparse-dev
+
 pip3 install pynput
 
 pip3 install "$WHEEL_PATH"
