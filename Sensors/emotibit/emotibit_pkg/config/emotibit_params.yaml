@@ -1,0 +1,44 @@
+sensor_data_emotibit:
+  ros__parameters:
+    stream_names:
+      - GyroscopeX
+      - GyroscopeY
+      - GyroscopeZ
+      - AccelerometerX
+      - AccelerometerY
+      - AccelerometerZ
+      - MagnetometerX
+      - MagnetometerY
+      - MagnetometerZ
+      - PPGRed
+      - PPGGreen
+      - PPGInfrared
+      - Thermopile
+      - Temperature
+      - EDA
+      - HeartRate
+      - SCRFrequency
+      - SCRAmplitude
+      - SCRRiseTime
+    topic_names:
+      - /emotibit/gyro_x
+      - /emotibit/gyro_y
+      - /emotibit/gyro_z
+      - /emotibit/acc_x
+      - /emotibit/acc_y
+      - /emotibit/acc_z
+      - /emotibit/mag_x
+      - /emotibit/mag_y
+      - /emotibit/mag_z
+      - /emotibit/ppg_red
+      - /emotibit/ppg_grn
+      - /emotibit/ppg_inf
+      - /emotibit/therm
+      - /emotibit/temp
+      - /emotibit/eda
+      - /emotibit/hr
+      - /emotibit/scr_freq
+      - /emotibit/scr_amp
+      - /emotibit/scr_rt
+    emotibit_timer: 1.0
+    stream_timeout: 0.2
