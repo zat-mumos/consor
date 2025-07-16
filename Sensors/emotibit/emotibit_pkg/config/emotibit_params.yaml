@@ -41,4 +41,3 @@ sensor_data_emotibit:
       - /emotibit/scr_amp
       - /emotibit/scr_rt
     emotibit_timer: 1.0
-    stream_timeout: 0.2
