@@ -52,67 +52,73 @@ class SensorDataEmotibit(Node):
 
         # Create threads in the background
         try:
-            background_thread = Thread(target=self.threads_fnc)
+            background_thread = Thread(target=self.threads_fnc, daemon=True)
+            self.get_logger().debug(f"{background_thread.name} initialised")
             background_thread.start()
+            self.get_logger().debug(f"{background_thread.name} started")
         except Exception as e:
             self.get_logger().debug(f"Exception: {e}")
 
 
     def threads_fnc(self):
+        self.get_logger().debug(f"In Function: threads_fnc()")
         self.create_threads()
 
-        time.sleep(0.1) # buffer time for thread to start
+        # time.sleep(0.1) # buffer time for thread to start
 
-        # On completing the execution, wait for all threads to finish
-        self.get_logger().info(f"Joining {len(self.current_threads)} threads")
-        for threads in self.current_threads:
-            self.get_logger().debug(f"Joining thread: {threads.name}")
-            threads.join()
-            self.get_logger().debug(f"Thread joined: {threads.name}")
-        self.get_logger().info("All threads completed.")
+        # # On completing the execution, wait for all threads to finish
+        # self.get_logger().info(f"Joining {len(self.current_threads)} threads")
+        # for threads in self.current_threads:
+        #     self.get_logger().debug(f"Joining thread: {threads.name}")
+        #     threads.join()
+        #     self.get_logger().debug(f"Thread joined: {threads.name}")
+        # self.get_logger().info("All threads completed.")
 
 
     def create_threads(self):
+        self.get_logger().debug(f"In Function: create_threads()")
+        self.current_threads = [] # refresh list of current_threads
+        k = 2 # Thread 1 is background thread
         for stream in self.stream_type:
             self.get_logger().debug(f"Thread initialised")
-            thread = Thread(target=self.get_sensor_data, args=(stream,))
+            thread = Thread(target=self.get_sensor_data, args=(stream, k,), daemon=True)
             self.get_logger().debug(f"Starting thread")
             thread.start()
             self.get_logger().debug(f"Thread appended")
             self.current_threads.append(thread)
+            k += 1
+        self.get_logger().info(f"{len(self.current_threads)} threads created & appended")
 
     
-    def get_sensor_data(self, stream_type):
+    def get_sensor_data(self, stream_type, id):
         try:
             curr_stream_pub = self.publisher[stream_type]
             self.get_logger().debug(f"Current publisher for stream type: {curr_stream_pub} | {stream_type}")
+            while rclpy.ok():
+                stream = resolve_byprop("type", stream_type)
+                if not stream:
+                    self.get_logger().error(f"No streams found of type: {stream_type}")
+                    exit()
+                    rclpy.shutdown()
+                self.get_logger().info(f'Stream found: {stream_type}')
 
-            stream = resolve_byprop("type", stream_type)
-            if not stream:
-                self.get_logger().error(f"No streams found of type: {stream_type}")
-                exit()
-                rclpy.shutdown()
-         
-            self.get_logger().info(f'Stream found: {stream_type}')
+                inlet = StreamInlet(stream[0])
+                sample, timestamp = inlet.pull_chunk(timeout=self.batch_time)
+                if sample:
+                    msg = EmotibitStream()
+                    msg.stream_name = stream_type
+                    var = [s[0] for s in sample]
+                    msg.sensor_data = var
+                    msg.timestamp = [self.convert_time(t) for t in timestamp]
+                    msg.header.stamp = self.get_clock().now().to_msg()
+                    
+                    curr_stream_pub.publish(msg)
+                    self.get_logger().info(f'msg:\n{msg}\n--------**************---------\n')
 
-            inlet = StreamInlet(stream[0])
-            sample, timestamp = inlet.pull_chunk(timeout=self.batch_time)
-            if sample:
-                msg = EmotibitStream()
-                msg.stream_name = stream_type
-                var = [s[0] for s in sample]
-                msg.sensor_data = var
-                msg.timestamp = [self.convert_time(t) for t in timestamp]
-                msg.header.stamp = self.get_clock().now().to_msg()
-                
-                curr_stream_pub.publish(msg)
-                self.get_logger().info(f'msg:\n{msg}\n--------**************---------\n')
-
-            else:
-                self.get_logger().info(f"Stream: {stream_type} | No data received")
-        
-            time.sleep(0.5)
-        
+                else:
+                    self.get_logger().info(f"Stream: {stream_type} | No data received")  
+        except Exception as e:
+            self.get_logger().error(f"Error (Thread {id}): {e}")      
         except KeyboardInterrupt:
             rclpy.shutdown()
             
@@ -129,11 +135,14 @@ def main():
     sensor_node=SensorDataEmotibit()
     sensor_node.get_logger().debug("Node has been initialised")
     print(f"Node: {sensor_node}\nType: {type(rclpy.spin)}")
-    rclpy.spin(sensor_node)
-    sensor_node.get_logger().debug("rclpy.spin() called ................")
-
-    sensor_node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(sensor_node)
+        sensor_node.get_logger().debug("rclpy.spin() called ................")
+    except KeyboardInterrupt:
+        sensor_node.get_logger().debug(f"KeyBoard Interrupt")
+    finally:
+        sensor_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
