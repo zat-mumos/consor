@@ -1,4 +1,4 @@
-sensor_data_emotibit:
+sensor_data_emotibit_with_oscilloscope:
   ros__parameters:
     stream_names:
       - GyroscopeX

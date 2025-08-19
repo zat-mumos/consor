@@ -1,4 +1,3 @@
-import os
 from ament_index_python.packages import get_package_share_directory
 
 import rclpy
@@ -10,15 +9,12 @@ from builtin_interfaces.msg import Time
 
 from pylsl import resolve_byprop, StreamInlet
 
-import threading
 from threading import Thread
 
-import time
 
-
-class SensorDataEmotibit(Node):
+class SensorDataEmotibitWithOscilloscope(Node):
     def __init__(self):
-        super().__init__('sensor_data_emotibit')
+        super().__init__('sensor_data_emotibit_with_oscilloscope')
 
         # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
 
@@ -116,7 +112,7 @@ class SensorDataEmotibit(Node):
 
 def main():
     rclpy.init()
-    sensor_node=SensorDataEmotibit()
+    sensor_node=SensorDataEmotibitWithOscilloscope()
 
     sensor_node.get_logger().debug("Node has been initialised")
     sensor_node.get_logger().debug(f"Node: {sensor_node}\nType: {type(rclpy.spin)}")

@@ -1,10 +1,10 @@
-# emotibit_pkg
+# emotibit_oscilloscope
 
-### ROS2 Package: **emotibit_pkg**
+### ROS2 Package: **emotibit_oscilloscope**
 
 Description: <br>
 
-A ROS2 package that includes a python ROS node (loc: /emotibit_pkg) for publishing EmotiBit sensor data.    
+A ROS2 package that includes a python ROS node (loc: /emotibit_oscilloscope) for publishing EmotiBit sensor data.    
 
 
 ##### Pre-requisites
@@ -20,15 +20,15 @@ For other dependencies, refer to the main README of this repository.
 
 #### ROS2 package: 
 
-emotibit_pkg
+emotibit_oscilloscope
 
 #### File name: 
 
-emotibit_pkg/emotibit_pkg/emotibit.py
+emotibit_oscilloscope/emotibit_oscilloscope/emotibit_osc.py
 
 #### ROS Node name: 
 
-SensorDataEmotibit
+SensorDataEmotibitWithOscilloscope
 
 #### Description: 
 
@@ -36,7 +36,7 @@ Publishes sensor data to ROS2 topics
 
 #### ROS2 Topic: 
 
-One ROS2 topic is defined per stream. Hence, there are multiple ROS2 topics. These are stored in the *emotibit_params.yaml* file (loc: emotibit_pkg/config).
+One ROS2 topic is defined per stream. Hence, there are multiple ROS2 topics. These are stored in the *emotibit_params.yaml* file (loc: emotibit_oscilloscope/config).
 
 #### ROS Message: 
 
@@ -71,7 +71,7 @@ The parameters are defined in the *emotibit_params.yaml* file. It includes,
 
 #### Launch command:
 
-`ros2 launch emotibit_pkg launch.py`
+`ros2 launch emotibit_oscilloscope launch.py`
 
-For more information on how to install the package and use it, refer to [this](Sensors/emotibit) README (loc: Sensors/emotibit directory).
+For more information on how to install the package and use it, refer to [this](Sensors/emotibit/emotibit_oscilloscope) README (loc: Sensors/emotibit/emotibit_oscilloscope directory).
 

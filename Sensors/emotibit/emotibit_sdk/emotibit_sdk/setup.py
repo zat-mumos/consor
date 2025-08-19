@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 import os
 
-package_name = 'emotibit_pkg'
+package_name = 'emotibit_sdk'
 
 setup(
     name=package_name,
@@ -18,12 +18,12 @@ setup(
     zip_safe=True,
     maintainer='swathy',
     maintainer_email='swathy.cheruvalath@smail.inf.h-brs.de',
-    description='TODO: Package description',
+    description='This ROS2 package uses BrainFlow SDK to publish the EmotiBit data',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'publish_emotibit_data = emotibit_pkg.emotibit:main'
+            'publish_emotibit_data_with_sdk = emotibit_sdk.emotibit_sdk:main'
         ],
     },
 )

@@ -1,0 +1,18 @@
+sensor_data_emotibit_with_sdk:
+  ros__parameters:
+    stream_names:
+      - Accelerometer
+      - Gyroscope
+      - Magnetometer
+      - PPG
+      - EDA
+      - Temperature
+    topic_names:
+      - /emotibit/acc
+      - /emotibit/gyro
+      - /emotibit/mag
+      - /emotibit/ppg
+      - /emotibit/eda
+      - /emotibit/temp
+    emotibit_timer: 5.0
+    callback_timer: 1.0

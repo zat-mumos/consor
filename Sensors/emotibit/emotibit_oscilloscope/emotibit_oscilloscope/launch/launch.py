@@ -9,13 +9,13 @@ import os
 
 
 def generate_launch_description():
-    package_name_emotibit='emotibit_pkg'
+    package_name_emotibit='emotibit_oscilloscope'
 
     return LaunchDescription([Node(
         package=package_name_emotibit,
-        executable='publish_emotibit_data',
-        name='sensor_data_emotibit',
-        output='screen',
+        executable='publish_emotibit_data_with_oscilloscope',
+        name='sensor_data_emotibit_with_oscilloscope',
+        output='log',
         parameters=[PathJoinSubstitution([FindPackageShare(package_name_emotibit), 'config', 'emotibit_params.yaml'])]
     )
     ])
