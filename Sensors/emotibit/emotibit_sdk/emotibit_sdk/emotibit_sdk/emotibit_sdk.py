@@ -49,6 +49,10 @@ class SensorDataEmotibitWithSdk(Node):
         self.get_logger().debug(f'Beginning code ... ')
         self.get_logger().info(f'Starting node for EmotiBit sensor (publishing frequency: {batch_time})')
         self.get_logger().debug(f'Stream type: \n{type_stream}\n\nTopic: \n{sensor_topic})')
+
+        self.constants = {
+            'Accelerometer': 1, 'Gyroscope': 2, 'Magnetometer': 3, 'PPG': 4, 'EDA': 5, 'Temperature': 6
+        }
             
         self.publisher = {} # Keep track of publishers
         self.current_threads = [] # keep track of threads
@@ -124,6 +128,7 @@ class SensorDataEmotibitWithSdk(Node):
                     # for each stream, publish data
                     for stream in self.stream_type:
                         curr_publisher = self.publisher[stream]
+                        curr_const = self.constants.get(stream)
                         channels = []
                         if stream in ["Accelerometer", "Gyroscope", "Magnetometer"]: # DEFAULT PRESET
                             timestamp = data_def_to_publish.iloc[:, timestamp_channel_def].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
@@ -153,20 +158,27 @@ class SensorDataEmotibitWithSdk(Node):
 
                         main_msg = EmotibitMsg()
                         main_msg.timestamp = [self.convert_time(t) for t in timestamp]
-                        main_msg.stream_name = f"{stream}"
+                        curr_const = self.constants.get(stream)
+                        main_msg.stream = curr_const
 
                         temp_msg_data = []
                         for k, ch in enumerate(channels):
                             msg = EmotibitData()
-                            msg.channel = f"ch_{ch}"
+                            if stream in ['EDA', 'Temperature']:
+                                self.get_logger().info(f"if: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
+                                msg.channel = 0
+                            else:
+                                self.get_logger().info(f"else: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
+                                # self.get_logger().debug(f"\nData:\n{temp_data}\n")
+                                msg.channel = k+1
                             temp_data = sensor_data.iloc[:, k] # columns range from 0 - no_channels-1
                             temp_data = temp_data.to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                            self.get_logger().info(f"Stream name: {stream}\nChannel No: {channels[k]}\nk: {k}\nch: {ch}\nData:\n{temp_data}\n")
+                            self.get_logger().debug(f"Stream name: {stream}\nChannel No: {channels[k]}\nk: {k}\nch: {ch}\nData:\n{temp_data}\n")
                             msg.data = temp_data
                             self.get_logger().debug(f"\nCurrent Msg: {msg}\nTemp_msg_data: {temp_msg_data}\n")
                             temp_msg_data.append(msg) # One list per channel
 
-                        main_msg.sensor_data = temp_msg_data
+                        main_msg.data = temp_msg_data
                         curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
                         self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
         except KeyboardInterrupt:
