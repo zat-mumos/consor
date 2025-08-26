@@ -163,6 +163,7 @@ class zat_consor_node(Node):
     def _emotibit_synch(self, data, stream):
          if self._emotibit_synch_data is None:
               self._emotibit_synch_data = EmotibitSynchData()
+              setattr(self._emotibit_synch_data, stream, [data])
          else:
               setattr(self._emotibit_synch_data, stream, [data])
               if all(getattr(self._emotibit_synch_data, attr) is not None 
@@ -174,6 +175,8 @@ class zat_consor_node(Node):
          data = msg
          stream = "emotibit_accelerometer"
          self._emotibit_synch(data,stream)
+         self.get_logger().info("Added accelerator code")
+         self.get_logger().info(str(self._emotibit_synch_data.emotibit_accelerometer))
 
     def _emotibit_gyroscope_callback(self, msg):
          data = msg
