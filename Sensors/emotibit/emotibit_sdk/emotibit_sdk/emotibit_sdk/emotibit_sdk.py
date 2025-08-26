@@ -70,117 +70,120 @@ class SensorDataEmotibitWithSdk(Node):
             while rclpy.ok():
                 self.get_logger().debug("In timer_callback 2")
 
-                params = BrainFlowInputParams()
-                # current_preset = BrainFlowPresets.DEFAULT_PRESET
-                # params.preset = current_preset
+                if self.i == 0:
+                    params = BrainFlowInputParams()
+                    # current_preset = BrainFlowPresets.DEFAULT_PRESET
+                    # params.preset = current_preset
 
-                board_ids = BoardIds.EMOTIBIT_BOARD    
-                board = BoardShim(board_ids, params)
-                self.get_logger().debug(f"Board: {board}")
+                    board_ids = BoardIds.EMOTIBIT_BOARD    
+                    board = BoardShim(board_ids, params)
+                    self.get_logger().debug(f"Board: {board}")
 
-                if not board.is_prepared():
-                    self.get_logger().debug("In timer_callback 3")
-                    board.prepare_session()
-                
-                if board.is_prepared():
-                    self.get_logger().debug("In timer_callback 4")
-                    board.start_stream ()
-                    self.get_logger().debug(f"Streaming started")
-                    time.sleep(self.batch_time)
-
-                    data_def = board.get_board_data(preset=BrainFlowPresets.DEFAULT_PRESET)
-                    data_aux = board.get_board_data(preset=BrainFlowPresets.AUXILIARY_PRESET)
-                    data_anc = board.get_board_data(preset=BrainFlowPresets.ANCILLARY_PRESET)  # get all data and remove it from internal buffer
+                    if not board.is_prepared():
+                        self.get_logger().debug("In timer_callback 3")
+                        board.prepare_session()
                     
-                    self.get_logger().debug(f"Data received")
-                    board.stop_stream()
-                    self.get_logger().debug(f"Streaming stopped")
-                    board.release_session()
-                    self.get_logger().debug(f"Session released")
+                    self.i += 1
+                    self.get_logger().debug(f"self.i = {self.i}")
+                
+                self.get_logger().debug("In timer_callback 4")
+                board.start_stream ()
+                self.get_logger().debug(f"Streaming started")
+                time.sleep(self.batch_time)
+
+                data_def = board.get_board_data(preset=BrainFlowPresets.DEFAULT_PRESET)
+                data_aux = board.get_board_data(preset=BrainFlowPresets.AUXILIARY_PRESET)
+                data_anc = board.get_board_data(preset=BrainFlowPresets.ANCILLARY_PRESET)  # get all data and remove it from internal buffer
+                
+                self.get_logger().debug(f"Data received")
+                board.stop_stream()
+                self.get_logger().debug(f"Streaming stopped")
+                # board.release_session()
+                # self.get_logger().debug(f"Session released")
 
 
-                    board_descr_def = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.DEFAULT_PRESET)
-                    board_descr_aux = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.AUXILIARY_PRESET)
-                    board_descr_anc = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.ANCILLARY_PRESET)
+                board_descr_def = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.DEFAULT_PRESET)
+                board_descr_aux = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.AUXILIARY_PRESET)
+                board_descr_anc = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.ANCILLARY_PRESET)
 
-                    self.get_logger().debug(f"DEFAULT PRESET")
-                    self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_def)).shape}")
-                    self.get_logger().debug(f"Board Description: {board_descr_def}\n")
+                self.get_logger().debug(f"DEFAULT PRESET")
+                self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_def)).shape}")
+                self.get_logger().debug(f"Board Description: {board_descr_def}\n")
 
-                    self.get_logger().debug(f"AUXILIARY PRESET")
-                    self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_aux)).shape}")
-                    self.get_logger().debug(f"Board Description: {board_descr_aux}\n")
+                self.get_logger().debug(f"AUXILIARY PRESET")
+                self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_aux)).shape}")
+                self.get_logger().debug(f"Board Description: {board_descr_aux}\n")
 
-                    self.get_logger().debug(f"ANCILIARY PRESET")
-                    self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_anc)).shape}")
-                    self.get_logger().debug(f"Board Description: {board_descr_anc}\n")
+                self.get_logger().debug(f"ANCILIARY PRESET")
+                self.get_logger().debug(f"Data (shape): {pd.DataFrame(np.transpose(data_anc)).shape}")
+                self.get_logger().debug(f"Board Description: {board_descr_anc}\n")
 
-                    data_def_to_publish = pd.DataFrame(np.transpose(data_def)) 
-                    data_aux_to_publish = pd.DataFrame(np.transpose(data_aux)) 
-                    data_anc_to_publish = pd.DataFrame(np.transpose(data_anc)) 
+                data_def_to_publish = pd.DataFrame(np.transpose(data_def)) 
+                data_aux_to_publish = pd.DataFrame(np.transpose(data_aux)) 
+                data_anc_to_publish = pd.DataFrame(np.transpose(data_anc)) 
 
-                    timestamp_channel_def = board_descr_def['timestamp_channel']
-                    timestamp_channel_aux = board_descr_aux['timestamp_channel']
-                    timestamp_channel_anc = board_descr_anc['timestamp_channel']
+                timestamp_channel_def = board_descr_def['timestamp_channel']
+                timestamp_channel_aux = board_descr_aux['timestamp_channel']
+                timestamp_channel_anc = board_descr_anc['timestamp_channel']
 
-                    self.get_logger().debug(f"Timestamp Channel: \nDefault {timestamp_channel_def}\nAuxiliary {timestamp_channel_aux}\nAncillary {timestamp_channel_anc}")
+                self.get_logger().debug(f"Timestamp Channel: \nDefault {timestamp_channel_def}\nAuxiliary {timestamp_channel_aux}\nAncillary {timestamp_channel_anc}")
 
-                    # for each stream, publish data
-                    for stream in self.stream_type:
-                        curr_publisher = self.publisher[stream]
-                        curr_const = self.constants.get(stream)
-                        channels = []
-                        if stream in ["Accelerometer", "Gyroscope", "Magnetometer"]: # DEFAULT PRESET
-                            timestamp = data_def_to_publish.iloc[:, timestamp_channel_def].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                            if stream == 'Accelerometer':
-                                channels = board_descr_def['accel_channels']
-                            elif stream == 'Gyroscope':
-                                channels = board_descr_def['gyro_channels']
-                            elif stream == 'Magnetometer':
-                                channels = board_descr_def['magnetometer_channels']
-                            sensor_data = data_def_to_publish.iloc[:, channels]
+                # for each stream, publish data
+                for stream in self.stream_type:
+                    curr_publisher = self.publisher[stream]
+                    curr_const = self.constants.get(stream)
+                    channels = []
+                    if stream in ["Accelerometer", "Gyroscope", "Magnetometer"]: # DEFAULT PRESET
+                        timestamp = data_def_to_publish.iloc[:, timestamp_channel_def].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        if stream == 'Accelerometer':
+                            channels = board_descr_def['accel_channels']
+                        elif stream == 'Gyroscope':
+                            channels = board_descr_def['gyro_channels']
+                        elif stream == 'Magnetometer':
+                            channels = board_descr_def['magnetometer_channels']
+                        sensor_data = data_def_to_publish.iloc[:, channels]
 
-                        elif stream in ['PPG']: #AUXILIARY PRESET
-                            timestamp = data_aux_to_publish.iloc[:, timestamp_channel_aux].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                            channels = board_descr_aux['ppg_channels']
-                            sensor_data = data_aux_to_publish.iloc[:, channels]
+                    elif stream in ['PPG']: #AUXILIARY PRESET
+                        timestamp = data_aux_to_publish.iloc[:, timestamp_channel_aux].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        channels = board_descr_aux['ppg_channels']
+                        sensor_data = data_aux_to_publish.iloc[:, channels]
 
-                        elif stream in ["EDA", "Temperature"]: # ANCILLARY PRESET
-                            timestamp = data_anc_to_publish.iloc[:, timestamp_channel_anc].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                            if stream == 'EDA':
-                                channels = board_descr_anc['eda_channels']
-                            elif stream == 'Temperature':
-                                channels = board_descr_anc['temperature_channels']
-                            sensor_data = data_anc_to_publish.iloc[:, channels]
+                    elif stream in ["EDA", "Temperature"]: # ANCILLARY PRESET
+                        timestamp = data_anc_to_publish.iloc[:, timestamp_channel_anc].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        if stream == 'EDA':
+                            channels = board_descr_anc['eda_channels']
+                        elif stream == 'Temperature':
+                            channels = board_descr_anc['temperature_channels']
+                        sensor_data = data_anc_to_publish.iloc[:, channels]
+                    else:
+                        self.get_logger().info(f"Current stream ({stream}) does not belong to any preset\nContinuing ...")
+                        continue
+
+                    main_msg = EmotibitMsg()
+                    main_msg.timestamp = [self.convert_time(t) for t in timestamp]
+                    curr_const = self.constants.get(stream)
+                    main_msg.stream = curr_const
+
+                    temp_msg_data = []
+                    for k, ch in enumerate(channels):
+                        msg = EmotibitData()
+                        if stream in ['EDA', 'Temperature']:
+                            self.get_logger().info(f"if: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
+                            msg.channel = 0
                         else:
-                            self.get_logger().info(f"Current stream ({stream}) does not belong to any preset\nContinuing ...")
-                            continue
+                            self.get_logger().info(f"else: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
+                            # self.get_logger().debug(f"\nData:\n{temp_data}\n")
+                            msg.channel = k+1
+                        temp_data = sensor_data.iloc[:, k] # columns range from 0 - no_channels-1
+                        temp_data = temp_data.to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        self.get_logger().debug(f"Stream name: {stream}\nChannel No: {channels[k]}\nk: {k}\nch: {ch}\nData:\n{temp_data}\n")
+                        msg.data = temp_data
+                        self.get_logger().debug(f"\nCurrent Msg: {msg}\nTemp_msg_data: {temp_msg_data}\n")
+                        temp_msg_data.append(msg) # One list per channel
 
-                        main_msg = EmotibitMsg()
-                        main_msg.timestamp = [self.convert_time(t) for t in timestamp]
-                        curr_const = self.constants.get(stream)
-                        main_msg.stream = curr_const
-
-                        temp_msg_data = []
-                        for k, ch in enumerate(channels):
-                            msg = EmotibitData()
-                            if stream in ['EDA', 'Temperature']:
-                                self.get_logger().info(f"if: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
-                                msg.channel = 0
-                            else:
-                                self.get_logger().info(f"else: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
-                                # self.get_logger().debug(f"\nData:\n{temp_data}\n")
-                                msg.channel = k+1
-                            temp_data = sensor_data.iloc[:, k] # columns range from 0 - no_channels-1
-                            temp_data = temp_data.to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                            self.get_logger().debug(f"Stream name: {stream}\nChannel No: {channels[k]}\nk: {k}\nch: {ch}\nData:\n{temp_data}\n")
-                            msg.data = temp_data
-                            self.get_logger().debug(f"\nCurrent Msg: {msg}\nTemp_msg_data: {temp_msg_data}\n")
-                            temp_msg_data.append(msg) # One list per channel
-
-                        main_msg.data = temp_msg_data
-                        curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
-                        self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
+                    main_msg.data = temp_msg_data
+                    curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
+                    self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
         except KeyboardInterrupt:
             self.get_logger().debug('Session in keyboard interrupt')
             board.stop_stream()
