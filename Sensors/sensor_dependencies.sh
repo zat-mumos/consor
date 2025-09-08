@@ -11,7 +11,7 @@ MOVELLA_DEPENDENCY_DIR="$SENSOR_DIR/movella_xSens_dot/movella_pkg/movella_depend
 
 eSense_DEPENDENCY_DIR="$SENSOR_DIR/eSense/eSense_dependencies.sh"
 
-DEFAULT_SCRIPTS =("$MOVELLA_DEPENDENCY_DIR" "$eSense_DEPENDENCY_DIR")
+DEFAULT_SCRIPTS=("$MOVELLA_DEPENDENCY_DIR" "$eSense_DEPENDENCY_DIR")
 
 
 if [ $# -eq 0 ]; then
@@ -55,6 +55,6 @@ else
     done
 fi
 
-echo "sensor requirements"
+echo "sensor requirements installing"
 
 pip install -r "$SENSOR_DIR/sensor_requirements.txt"
