@@ -34,7 +34,9 @@ else
             "movella")
                 if [ -f "$MOVELLA_DEPENDENCY_DIR" ]; then
                     echo "Running dependency script for Movella"
+                    pip install -r "$SENSOR_DIR/sensor_requirements.txt"
                     bash "$MOVELLA_DEPENDENCY_DIR"
+                    
                 else
                     echo "Movella dependency script not found"
                 fi
@@ -42,19 +44,29 @@ else
             "esense")
                 if [ -f "$eSense_DEPENDENCY_DIR" ]; then
                     echo "Running dependency script for eSense"
+                    pip install -r "$SENSOR_DIR/sensor_requirements.txt"
                     bash "$eSense_DEPENDENCY_DIR"
                 else
                     echo "eSense dependency script not found"
                 fi
                 ;;
+
+            "openbci")
+                echo "Running dependency script for OpenBCI"
+                pip install -r "$SENSOR_DIR/sensor_requirements.txt"
+                ;;
+
+            "emotibit")
+                echo "Running dependency script for emotibit"
+                pip install -r "$SENSOR_DIR/sensor_requirements.txt"
+                ;;
+
             *)
                 echo "Unknown sensor: $sensor"
-                echo "Available sensors: movella, esense"
+                echo "Available sensors: movella, esense, emotibit, openbci"
                 ;;
         esac
     done
 fi
 
-echo "sensor requirements installing"
 
-pip install -r "$SENSOR_DIR/sensor_requirements.txt"
