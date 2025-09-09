@@ -67,8 +67,6 @@ chmod +x sensor_dependencies.sh
 ./sensor_dependencies.sh movella
 ```
 
-(_Do not give sudo access to the shell scripts!_)
-
 
 ### For running _ONLY_ the eSense sensor installtion:
 ```
@@ -77,7 +75,20 @@ chmod +x sensor_dependencies.sh
 ./sensor_dependencies.sh esense
 ```
 
-(_Do not give sudo access to the shell scripts!_)
+### For running _ONLY_ the EmotiBit sensor installtion:
+```
+cd src/consor/Sensors
+chmod +x sensor_dependencies.sh
+./sensor_dependencies.sh emotibit
+```
+
+### For running _ONLY_ the OpenBCI sensor installtion:
+```
+cd src/consor/Sensors
+chmod +x sensor_dependencies.sh
+./sensor_dependencies.sh openbci
+```
+
 
 
 ## Build the Project
