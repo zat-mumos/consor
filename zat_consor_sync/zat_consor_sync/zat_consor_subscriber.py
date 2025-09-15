@@ -173,34 +173,34 @@ class zat_consor_node(Node):
 
     def _emotibit_accelerometer_callback(self, msg):
          data = msg
-         stream = "emotibit_accelerometer"
+         stream = "accelerometer"
          self._emotibit_synch(data,stream)
          self.get_logger().info("Added accelerator code")
          self.get_logger().info(str(self._emotibit_synch_data.emotibit_accelerometer))
 
     def _emotibit_gyroscope_callback(self, msg):
          data = msg
-         stream = "emotibit_gyroscope"
+         stream = "gyroscope"
          self._emotibit_synch(data,stream)
 
     def _emotibit_magnetometer_callback(self, msg):
          data = msg
-         stream = "emotibit_magnetometer"
+         stream = "magnetometer"
          self._emotibit_synch(data,stream)
 
     def _emotibit_ppg_callback(self, msg):
          data = msg
-         stream = "emotibit_ppg"
+         stream = "ppg"
          self._emotibit_synch(data,stream)  
 
     def _emotibit_eda_callback(self, msg):
          data = msg
-         stream = "emotibit_eda"
+         stream = "eda"
          self._emotibit_synch(data,stream) 
 
     def _emotibit_temperature_callback(self, msg):
          data = msg
-         stream = "emotibit_temperature"
+         stream = "temperature"
          self._emotibit_synch(data,stream)      
 
 def main():
