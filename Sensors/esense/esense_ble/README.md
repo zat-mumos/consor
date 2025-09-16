@@ -1,19 +1,14 @@
 # Introduction
 
-- The eSense sensors consists of Skin response, temperature, respiration and pulse sensors. For more information, refer to the [Wiki](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/consor/-/wikis/home/eSense/Consor-Vital-Information) page
-- The hardware setup for these sensors are as follows:
+- This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node using **bluetoothctl**. 
 
-![eSense Hardware Setup](Sensors/eSense/more_info/Images/eSense_HardwareSetup.png)
-
-<br>
-
-- This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node.
 - The ROS2 package for publishing eSense sensor data is *physio_sensor*.
+- When the data is transferred via **Bluetooth**, then the **physio_sensor** ROS2 package should be used.
 
-#### eSense folder contents
+#### esense_ble folder contents
 
-- more_info: Includes any other documentation such as screenshots, images etc
-- physio_sensor: ROS2 package for eSense
+- docs: Includes documentation about the ROS2 package and bluetoothctl bash scripts
+- physio_sensor: ROS2 package for eSense when data is transferred via BLE (Bluetooth Low Energy).
 
 
 # physio_sensor Package
@@ -66,7 +61,7 @@
 - Open the application on the android device.  
 - To test the application, follow the steps:
     - Set the sampling rate (to 1 or 2 Hz for simplicity)
-    - Set sensor type to any sensor (If not using any sensor, then set the sensor type to a simulator e.g. tempSimulator)
+    - Set sensor type to any sensor (If not connected to any sensor, then set the sensor type to a simulator e.g. tempSimulator)
     - Click start sampling. This should prompt a dialog box asking to allow permissions if not already granted. If the sampling does not start after granting permission, click start sampling again. 
     - Click stop sampling to stop the sampling. 
 
@@ -104,4 +99,4 @@
     - whether *empty* package is installed on the system (refer to above section Installation: 'empty' package)
 
 
-- If the eSense_SDK_2 application does not open, go to the app settings on the android device and enable *Nearby Devices* permissions.
+- If the eSense_SDK_2 application does not open/crashes, go to the app settings on the android device and enable *Nearby Devices* permissions. Also check if Bluetooth is enabled on the device and if Bluetooth is OFF, switch Bluetooth ON.
