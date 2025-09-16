@@ -2,6 +2,12 @@
 
 - This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node using **pylsl**.
 
+- The hardware setup for these sensors are as follows:
+
+![eSense Hardware Setup](Sensors/esense/misc/Images/eSense_HardwareSetup_LSL.png)
+
+<br>
+
 - The ROS2 package for publishing eSense sensor data is *esense_pkg*.
 - When the data is transferred via **Lab Streaming Layer (LSL)**, then the **physio_sensor** ROS2 package should be used.
 

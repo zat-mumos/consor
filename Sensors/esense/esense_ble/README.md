@@ -2,8 +2,16 @@
 
 - This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node using **bluetoothctl**. 
 
+- The hardware setup for these sensors are as follows:
+
+![eSense Hardware Setup](Sensors/esense/misc/Images/eSense_HardwareSetup_BLE.png)
+
+<br>
+
 - The ROS2 package for publishing eSense sensor data is *physio_sensor*.
 - When the data is transferred via **Bluetooth**, then the **physio_sensor** ROS2 package should be used.
+
+
 
 #### esense_ble folder contents
 
