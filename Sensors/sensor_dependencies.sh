@@ -9,7 +9,7 @@ SENSOR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 MOVELLA_DEPENDENCY_DIR="$SENSOR_DIR/movella_xSens_dot/movella_pkg/movella_dependencies.sh"
 
-eSense_DEPENDENCY_DIR="$SENSOR_DIR/eSense/eSense_dependencies.sh"
+eSense_DEPENDENCY_DIR="$SENSOR_DIR/esense/esense_ble/eSense_dependencies.sh"
 
 DEFAULT_SCRIPTS=("$MOVELLA_DEPENDENCY_DIR" "$eSense_DEPENDENCY_DIR")
 
