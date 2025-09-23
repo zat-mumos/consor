@@ -74,4 +74,5 @@ Integration with other sensors including
 ### Contributors
 
 - Jay Parikh
+- Oviya Rajavel
 - Swathy Cheruvalath
