@@ -5,7 +5,7 @@ import rclpy.duration
 from rclpy.node import Node
 
 import sys
-from zat_ros2_msgs.msg import EsenseBLEStream, EsenseBLE
+from zat_ros2_msgs.msg import EsenseStream, Esense
 import subprocess
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -44,7 +44,7 @@ class SensorDataEsense(Node):
         self.sample_no = sample_no
         self.sample_data = sample_data
 
-        self.publish_sensor_data_ = self.create_publisher(EsenseBLEStream, sensor_topic, 10)
+        self.publish_sensor_data_ = self.create_publisher(EsenseStream, sensor_topic, 10)
         
         # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
         # Start a subprocess to run the bash script
@@ -62,12 +62,12 @@ class SensorDataEsense(Node):
             start_time=self.get_clock().now()
             total_duration = rclpy.duration.Duration(nanoseconds=int(self.batch_time)*1e9)
 
-            batch_msg = EsenseBLEStream()
+            batch_msg = EsenseStream()
             batch_data = []
 
             self.i = 0
             while self.get_clock().now() - start_time < total_duration:
-                msg = EsenseBLE()
+                msg = Esense()
                 lines = self.process.stdout.readline().strip()
                 # lines = sys.stdin.readline().strip()
                 dataValue = str(lines)

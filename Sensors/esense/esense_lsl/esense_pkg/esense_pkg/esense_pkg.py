@@ -4,7 +4,7 @@ from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
 
 import sys
-from zat_ros2_msgs.msg import EsenseLSL, EsenseLSLStream
+from zat_ros2_msgs.msg import Esense, EsenseStream
 from pylsl import StreamInlet, resolve_byprop
 from ament_index_python.packages import get_package_share_directory
 
@@ -73,7 +73,7 @@ class SensorDataEsense(Node):
                                     Sensor type: {self.sensor_type}")
 
             # Create publisher
-            self.publish_sensor_data = self.create_publisher(EsenseLSLStream, sensor_topic, 10)
+            self.publish_sensor_data = self.create_publisher(EsenseStream, sensor_topic, 10)
             
             self.get_logger().info('Publisher created. \nStarting node for eSense sensor data')
 
@@ -86,12 +86,12 @@ class SensorDataEsense(Node):
             start_time=self.get_clock().now()
             total_duration = rclpy.duration.Duration(nanoseconds=int(self.batch_time)*1e9)
 
-            main_msg = EsenseLSLStream()
+            main_msg = EsenseStream()
             batch_data = []
 
             self.i = 0
             while self.get_clock().now() - start_time < total_duration:
-                msg = EsenseLSL()
+                msg = Esense()
                 sample, timestamp = self.inlet.pull_sample()
                 timestamp = self.convert_time(timestamp)
 
