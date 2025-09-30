@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 import cv2
 import numpy as np
-from zat_ros2_msgs.msg import MovellaData, PhysioSensor, ZatConsorSynch, EmotibitMsg, EmotibitSynchData
+from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData,  EsenseStream
 
 
 class zat_consor_node(Node):
@@ -65,7 +65,7 @@ class zat_consor_node(Node):
                                                             self._movella_callback,
                                                             10)
         
-        self._esense_subscriber = self.create_subscription(PhysioSensor,
+        self._esense_subscriber = self.create_subscription(EsenseStream,
                                                            esense_topic,
                                                            self._esense_callback,
                                                            10)
@@ -129,12 +129,18 @@ class zat_consor_node(Node):
                     used_new.append(name)
                elif old_val is not None:
                     final_data[name] = old_val
-               else:
-                    return  
 
-            msg.esense_data = [final_data["esense"]]
-            msg.movella_data = [final_data["movella"]]
-            msg.emotibit_data = [final_data["emotibit"]]
+
+            if not final_data:
+               self.get_logger().warn("No sensor data yet, skipping publish")
+               return
+            
+            if "esense" in final_data: 
+               msg.esense_data = [final_data["esense"]]
+            if "movella" in final_data:
+               msg.movella_data = [final_data["movella"]]
+            if "emotibit" in final_data:
+               msg.emotibit_data = [final_data["emotibit"]]
 
             self._consor_publisher.publish(msg)
 
