@@ -84,9 +84,9 @@ class MovellabatchNode(Node):
             if not dev.setOnboardFilterProfile("General"):
                 self.get_logger().error("Could not set filter profile")
 
-            if not dev.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler):
+            if not dev.startMeasurement(movelladot_pc_sdk.XsPayloadMode_CustomMode4):
                 self.get_logger().error("Could not start measurement mode")
-
+        
         
         # buffer batch publisher
         # self.buffer_pub = self.create_publisher(MovellaData, '/movella/data', 100000)
@@ -101,7 +101,7 @@ class MovellabatchNode(Node):
 
         # self.buffer = { dev.portInfo().bluetoothAddress(): [] for dev in self.xdpcHandler.connectedDots() }
 
-        # printing the buffer
+        # buffer list
         self.get_logger().info(f"Buffer: {self.buffer}")
 
 
@@ -118,7 +118,6 @@ class MovellabatchNode(Node):
         self.record__batch_data()
 
     def record__batch_data(self):
-        orientationResetDone = False
 
         now_msg = self.get_clock().now()
 
@@ -132,20 +131,62 @@ class MovellabatchNode(Node):
                     pkt = self.xdpcHandler.getNextPacket(dev.portInfo().bluetoothAddress())
 
                     if pkt.containsOrientation():
-                        euler = pkt.orientationEuler()
+                        quat = pkt.orientationQuaternion()
+
+                        # debug quat as .x() is not available
+                        print(f"Quat: {quat}")
+                        
                         mac = dev.portInfo().bluetoothAddress()
 
                         imu_msg = MovellaImu()
                         imu_msg.header.stamp = self.get_clock().now().to_msg()
-                        imu_msg.roll = euler.roll()
-                        imu_msg.pitch = euler.pitch()
-                        imu_msg.yaw = euler.yaw()
+
+                        imu_msg.quat_x = quat[0]
+                        imu_msg.quat_y = quat[1]
+                        imu_msg.quat_z = quat[2]
+                        imu_msg.quat_w = quat[3]
 
                         self.buffer[mac].append(imu_msg)
 
                         
                         # print start time
-                        # self.get_logger().info(f"Time: {self.get_clock().now().to_msg()}")
+                        # self.get_logger().info(f"Time: {self.get_clock().now().to_msg()}")t
+                    
+                    if pkt.containsCalibratedAcceleration():
+                        acc = pkt.calibratedAcceleration()
+                        mac = dev.portInfo().bluetoothAddress()
+
+                        imu_msg = MovellaImu()
+                        imu_msg.header.stamp = self.get_clock().now().to_msg()
+                        imu_msg.ax = acc[0]
+                        imu_msg.ay = acc[1]
+                        imu_msg.az = acc[2]
+
+                        self.buffer[mac].append(imu_msg)
+                    
+                    if pkt.containsCalibratedGyroscopeData():
+                        gyr = pkt.calibratedGyroscopeData()
+                        mac = dev.portInfo().bluetoothAddress()
+
+                        imu_msg = MovellaImu()
+                        imu_msg.header.stamp = self.get_clock().now().to_msg()
+                        imu_msg.gyro_x = gyr[0]
+                        imu_msg.gyro_y = gyr[1]
+                        imu_msg.gyro_z = gyr[2]
+
+                        self.buffer[mac].append(imu_msg)
+
+                    if pkt.containsCalibratedMagneticField():
+                        mag = pkt.calibratedMagneticField()
+                        mac = dev.portInfo().bluetoothAddress()
+
+                        imu_msg = MovellaImu()
+                        imu_msg.header.stamp = self.get_clock().now().to_msg()
+                        imu_msg.mag_x = mag[0]
+                        imu_msg.mag_y = mag[1]
+                        imu_msg.mag_z = mag[2]
+
+                        self.buffer[mac].append(imu_msg)
 
 
 
