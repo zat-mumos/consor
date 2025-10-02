@@ -129,24 +129,18 @@ class MovellabatchNode(Node):
                 for dev in self.xdpcHandler.connectedDots():
                     mac = dev.portInfo().bluetoothAddress()
                     pkt = self.xdpcHandler.getNextPacket(dev.portInfo().bluetoothAddress())
+                    imu_msg = MovellaImu()
+                    imu_msg.header.stamp = self.get_clock().now().to_msg()
 
                     if pkt.containsOrientation():
                         quat = pkt.orientationQuaternion()
-
-                        # debug quat as .x() is not available
-                        print(f"Quat: {quat}")
                         
                         mac = dev.portInfo().bluetoothAddress()
-
-                        imu_msg = MovellaImu()
-                        imu_msg.header.stamp = self.get_clock().now().to_msg()
 
                         imu_msg.quat_x = quat[0]
                         imu_msg.quat_y = quat[1]
                         imu_msg.quat_z = quat[2]
                         imu_msg.quat_w = quat[3]
-
-                        self.buffer[mac].append(imu_msg)
 
                         
                         # print start time
@@ -156,8 +150,6 @@ class MovellabatchNode(Node):
                         acc = pkt.calibratedAcceleration()
                         mac = dev.portInfo().bluetoothAddress()
 
-                        imu_msg = MovellaImu()
-                        imu_msg.header.stamp = self.get_clock().now().to_msg()
                         imu_msg.ax = acc[0]
                         imu_msg.ay = acc[1]
                         imu_msg.az = acc[2]
@@ -168,8 +160,6 @@ class MovellabatchNode(Node):
                         gyr = pkt.calibratedGyroscopeData()
                         mac = dev.portInfo().bluetoothAddress()
 
-                        imu_msg = MovellaImu()
-                        imu_msg.header.stamp = self.get_clock().now().to_msg()
                         imu_msg.gyro_x = gyr[0]
                         imu_msg.gyro_y = gyr[1]
                         imu_msg.gyro_z = gyr[2]
@@ -180,8 +170,6 @@ class MovellabatchNode(Node):
                         mag = pkt.calibratedMagneticField()
                         mac = dev.portInfo().bluetoothAddress()
 
-                        imu_msg = MovellaImu()
-                        imu_msg.header.stamp = self.get_clock().now().to_msg()
                         imu_msg.mag_x = mag[0]
                         imu_msg.mag_y = mag[1]
                         imu_msg.mag_z = mag[2]
@@ -231,6 +219,7 @@ class MovellabatchNode(Node):
                         # reset the start time
                         self.buffer = defaultdict(list)
                         self.get_logger().info(f"Buffer cleared after {self.buffer_duration_ms} ms")
+                        
 
                         starttime = self.get_clock().now()
     
@@ -244,9 +233,14 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
+        
         node.stop_measurement()
+
+
     finally:
         node.destroy_node()
+        
+        XdpcHandler.cleanup()
         rclpy.shutdown()
 
 if __name__ == '__main__':
