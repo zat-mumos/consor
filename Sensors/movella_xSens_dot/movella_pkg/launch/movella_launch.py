@@ -17,7 +17,7 @@ def generate_launch_description():
 
     imu_buffer_duration_arg = DeclareLaunchArgument(
     'buffer_duration',
-    default_value='3000',
+    default_value='500',
     description='buffer data collection duration in milliseconds'
     )
 
@@ -25,7 +25,7 @@ def generate_launch_description():
 
     output_rate_arg = DeclareLaunchArgument(
         'output_rate',
-        default_value='1',
+        default_value='60',
         description='Output rate (Hz) for publishing IMU data'
     )
 
@@ -36,7 +36,9 @@ def generate_launch_description():
         name='movella_dot_node',
         output='screen',
         parameters=[{
-            'output_rate': LaunchConfiguration('output_rate')
+            'output_rate': LaunchConfiguration('output_rate'),
+            'imu_topic': LaunchConfiguration('imu_topic'),
+            'buffer_duration': LaunchConfiguration('buffer_duration')
         }]
     )
 

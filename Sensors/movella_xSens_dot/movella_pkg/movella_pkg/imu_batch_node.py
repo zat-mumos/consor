@@ -48,9 +48,16 @@ class MovellabatchNode(Node):
         self.declare_parameter('output_rate', 1)
 
         self.declare_parameter('imu_topic', '/sensor/movella/imu_data')
+
         self.declare_parameter('buffer_duration', 3000)  # in milliseconds
 
+        buffer_duration_ms = int(self.get_parameter('buffer_duration').value)  # in milliseconds
+
+        self.get_logger().info(f"Buffer duration (ms): {buffer_duration_ms}")
+
         output_rate = int(self.get_parameter('output_rate').value)
+
+        self.get_logger().info(f"Output rate (Hz): {output_rate}")
 
         # change the streaming rate to 10 hz
         for device in self.xdpcHandler.connectedDots():
@@ -108,6 +115,8 @@ class MovellabatchNode(Node):
 
         buffer_duration_ms = self.get_parameter('buffer_duration').value
 
+        self.get_logger().info(f"Buffer duration (ms): {buffer_duration_ms}")
+
         # self.buffer_duration_ms = 
         
         self.buffer_duration_ms = buffer_duration_ms
@@ -142,6 +151,10 @@ class MovellabatchNode(Node):
                         imu_msg.quat_z = quat[2]
                         imu_msg.quat_w = quat[3]
 
+                        euler = pkt.orientationEuler()
+                        euler_x = euler.x()
+                        euler_y = euler.y()
+                        euler_z = euler.z()
                         
                         # print start time
                         # self.get_logger().info(f"Time: {self.get_clock().now().to_msg()}")t
