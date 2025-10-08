@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from collections import defaultdict
 import rclpy
 from rclpy.node import Node
 import cv2
@@ -141,6 +142,9 @@ class zat_consor_node(Node):
           if "emotibit" in final_data:
                msg.emotibit_data = [final_data["emotibit"]]
 
+          if "movella" in final_data and "emotibit" in final_data:
+               self.merge_data(self.movella_data, self.synched_flattened_emotibit_data)
+
           self._consor_publisher.publish(msg)
 
           for name, (new_data, old_data) in sensors.items():
@@ -156,9 +160,31 @@ class zat_consor_node(Node):
                )
                   
 
+     def _flatten_movella_data(self, msg):
+          self.movella_data = defaultdict(list)
+          self.get_logger().info("flatten msgs")
+
+          for each_movella_sensor in msg.data:
+               temp_dict = {}
+               temp_dict['id'] = each_movella_sensor.id
+               for each_data in each_movella_sensor.data:
+                    values = []
+                    ts = each_data.header.stamp
+                    ts_ = self.convert_time(ts)
+                    values.append(ts)
+                    for fields in each_data.__slots__:
+                         if fields not in ('_header'):
+                              # self.get_logger().info(f"fields: {fields.strip('_')}, {getattr(each_data, fields)}")
+                              values.append((fields.strip('_'), getattr(each_data, fields)))
+                    self.movella_data[ts_] = values
+               self.movella_data = dict(sorted(self.movella_data.items()))
+               # self.get_logger().info(f"{self.movella_data}\n")
+
+
 
      def _movella_callback(self,msg): 
           self._movella_data = msg
+          self._flatten_movella_data(self._movella_data)
           self.get_logger().info("Movella data received")
 
      def _esense_callback(self,msg):
@@ -176,9 +202,91 @@ class zat_consor_node(Node):
                       for attr in self._emotibit_streams]
           # self.get_logger().info(f"temp_var: {temp_var}")
           if all(temp_var):
-                    self.get_logger().info(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
-                    self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
-                   
+               # self.get_logger().info(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
+               self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
+
+               # Flatten the msg once all modalities are received
+               self.synched_flattened_emotibit_data = self._emotibit_flatten_msgs(self._emotibit_synch_data)
+               self.get_logger().info("Emotibit data received")
+
+     def _emotibit_flatten_msgs(self, msg_):
+          emotibit_data = defaultdict(list)
+          for stream in self._emotibit_streams:
+               if stream == 'accelerometer':
+                    msg = msg_.accelerometer[0]
+                    s = 'acc'
+               elif stream == 'gyroscope':
+                    msg = msg_.gyroscope[0]
+                    s = 'gyro'
+               elif stream == 'magnetometer':
+                    msg = msg_.magnetometer[0]
+                    s = 'mag'
+               elif stream == 'ppg':
+                    msg = msg_.ppg[0]
+                    s = 'ppg'
+               elif stream == 'eda':
+                    msg = msg_.eda[0]
+                    s = 'eda'
+               elif stream == 'temperature':
+                    msg = msg_.temperature[0]
+                    s = 'temp'
+               # self.get_logger().info(f"msg_: {msg_}")
+               flattened_data = self._emotibit_flatten_helper_msg(msg, s, emotibit_data)
+               flat_emotibit_data = dict(sorted(flattened_data.items()))
+          # self.get_logger().info(f"{flat_emotibit_data.keys()}\n{flat_emotibit_data}\n\n")
+          return flat_emotibit_data
+
+     def _emotibit_flatten_helper_msg(self, msg, s, emotibit_data):
+          for index, timestamp in enumerate(msg.timestamp):
+               values = []
+               ts = timestamp
+               ts_ = self.convert_time(ts)
+               if ts not in emotibit_data[ts_]:
+                    values.append(ts)
+               for i in range(len(msg.data)):
+                    if len(msg.data) > 1:
+                         values.append((f"{s}_{i+1}", msg.data[i].data[index]))
+                    else:
+                         values.append((f"{s}", msg.data[i].data[index]))
+               
+               # self.get_logger().info(f"1: {msg.data[0].data[index]}, 2: {msg.data[1].data[index]}, 3: {msg.data[2].data[index]}\nvalues: {values}") 
+               if ts_ not in emotibit_data:
+                    # self.get_logger().info(f"11: {index} {ts_}")
+                    emotibit_data[ts_] = values
+               else:
+                    # self.get_logger().info(f"22 : {ts_}")
+                    emotibit_data[ts_].extend(values)
+          return emotibit_data
+
+     def convert_time(self, header):
+          seconds = header.sec
+          nanosec = header.nanosec * 1e-9
+
+          time = seconds + nanosec
+          return time
+     
+     def merge_data(self, movella_msg, emotibit_msg):
+          self.merged = defaultdict(list)
+          for key in movella_msg.keys() | emotibit_msg.keys():
+               if key in movella_msg and key in emotibit_msg:
+                    self.merged[key] = {
+                         'k':1,
+                         'movella': movella_msg[key],
+                         'emotibit': emotibit_msg[key]
+                    }
+               elif key in movella_msg:
+                    self.merged[key] = {
+                         'k':2,
+                         'movella': movella_msg[key]
+                    }
+               else:
+                    self.merged[key] = {
+                         'k':3,
+                         'emotibit': emotibit_msg[key]
+                    }
+          self.merged = dict(sorted(self.merged.items()))
+          self.get_logger().info(f"merged: {self.merged}\n\n")
+
 
      def _emotibit_accelerometer_callback(self, msg):
           data = msg
