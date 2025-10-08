@@ -56,8 +56,7 @@ class zat_consor_node(Node):
           self._old_esense_data = None
           self._old_movella_data = None
           self._old_emotibit_synch_data = None
-          self._emotibit_streams = ["emotibit_accelerometer","emotibit_gyroscope","emotibit_magnetometer","emotibit_ppg","emotibit_eda","emotibit_temperature"]
-          
+          self._emotibit_streams = ["accelerometer","gyroscope","magnetometer","ppg","eda","temperature"]
 
 
           self._movella_subscriber = self.create_subscription(MovellaData,
@@ -172,9 +171,13 @@ class zat_consor_node(Node):
                setattr(self._emotibit_synch_data, stream, [data])
           else:
                setattr(self._emotibit_synch_data, stream, [data])
-               if all(getattr(self._emotibit_synch_data, attr) is not None 
-                    for attr in self._emotibit_streams):
-                         self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
+          
+          temp_var = [True if getattr(self._emotibit_synch_data, attr) not in (None, []) else False 
+                      for attr in self._emotibit_streams]
+          # self.get_logger().info(f"temp_var: {temp_var}")
+          if all(temp_var):
+                    self.get_logger().info(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
+                    self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
                    
 
      def _emotibit_accelerometer_callback(self, msg):
@@ -182,7 +185,7 @@ class zat_consor_node(Node):
           stream = "accelerometer"
           self._emotibit_synch(data,stream)
           self.get_logger().info("Added accelerator code")
-          self.get_logger().info(str(self._emotibit_synch_data.emotibit_accelerometer))
+          # self.get_logger().info(str(self._emotibit_synch_data.accelerometer))
 
      def _emotibit_gyroscope_callback(self, msg):
           data = msg
