@@ -92,16 +92,20 @@ class SensorDataEsense(Node):
             self.i = 0
             while self.get_clock().now() - start_time < total_duration:
                 msg = Esense()
-                sample, timestamp = self.inlet.pull_sample()
-                timestamp = self.convert_time(timestamp)
+                sample_timestamp_array, _ = self.inlet.pull_sample()
+                self.get_logger().debug(f"Data received: {sample_timestamp_array}")
 
-                self.get_logger().debug(f"\nSample data: {sample[0]}\nTimestamp: {timestamp}\n")
-                
-                msg.sample_data = float(sample[0])
+                seconds = int(sample_timestamp_array[0])
+                nanoseconds = int(sample_timestamp_array[1])
+                timestamp = self.convert_time(seconds, nanoseconds)
+
+                self.get_logger().debug(f"\nSample no: {sample_timestamp_array[3]}: Sample data: {sample_timestamp_array[2]}\nTimestamp: {timestamp} ; {seconds} {nanoseconds}\n")
+                sample = sample_timestamp_array[2]
+                msg.sample_data = float(sample)
                 msg.header.stamp = timestamp
                 batch_data.append(msg)
                 self.i += 1
-            main_msg.header.stamp = timestamp #self.get_clock().now().to_msg()
+            main_msg.header.stamp = timestamp
             main_msg.data = batch_data
             main_msg.sensor_type = self.sensor_type
             main_msg.sample_rate = self.sampling_rate
@@ -115,10 +119,10 @@ class SensorDataEsense(Node):
             rclpy.shutdown()           
 
 
-    def convert_time(self, timestamp):
+    def convert_time(self, seconds, nanos):
         time = Time()
-        time.sec = int(timestamp)
-        time.nanosec = int((timestamp%1)*1e9)
+        time.sec = int(seconds)
+        time.nanosec = int(nanos)
         return time
 
     def ascii_to_string(self, string_data:str):
