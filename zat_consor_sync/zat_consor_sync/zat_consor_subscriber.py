@@ -2,20 +2,19 @@
 from collections import defaultdict
 import rclpy
 from rclpy.node import Node
+from rclpy.logging import LoggingSeverity
 import cv2
 import numpy as np
+import logging 
 from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData,  EsenseStream
 
-# for testimg
-import logging
-
-
-logging.basicConfig(
-     filename="data_sync_logging6.log",
-     filemode='a',
-     format='%(asctime)s - %(levelname)s - %(message)s',
-     level=logging.DEBUG
-)
+# # Uncomment lines below (till class definition) to save the output in a specific file mentioned by argument 'file_name'
+# logging.basicConfig(
+#      filename="data_sync_logging8.log",
+#      filemode='a',
+#      format='%(asctime)s - %(levelname)s - %(message)s',
+#      level=logging.DEBUG
+# )
 
 class zat_consor_node(Node):
      def __init__(
@@ -33,6 +32,8 @@ class zat_consor_node(Node):
 
 
           super().__init__('zat_consor_node')
+
+          # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
 
           self.declare_parameters(
                namespace='',
@@ -194,24 +195,18 @@ class zat_consor_node(Node):
                     if ts_ not in self.movella_data:
                          self.movella_data[ts_] = []
 
-                    # values.append(ts_)
-                    # values.append(each_movella_sensor.id)
-
                     for fields in data.__slots__: # iterate through each field to get their names & values
                          if fields not in ('_header'): # except header, add all other fields & their values to temp_dict
                               field_name = fields.strip('_')
                               field_value = getattr(data, fields)
                               temp_dict[field_name] = field_value
-                              # self.get_logger().info(f"fields: {fields.strip('_')}, {getattr(each_data, fields)}")
-                              # values.append((fields.strip('_'), getattr(each_data, fields)))
+                              self.get_logger().debug(f"fields: {fields.strip('_')}, {getattr(data, fields)}")
                     
                     self.get_logger().info(f"temp_dict: {temp_dict}")
                     
                     if temp_dict not in self.movella_data[ts_]:
                          self.movella_data[ts_].append(temp_dict) 
                self.movella_data = dict(sorted(self.movella_data.items()))
-
-
 
 
      def _esense_callback(self,msg):
@@ -259,7 +254,7 @@ class zat_consor_node(Node):
                temp_dict[field_name] = data.sample_data
 
                # values.append((ts, each_data.sample_data))
-               # self.get_logger().info(f"each data: {each_data}")
+               self.get_logger().debug(f"each data: {data}")
                if temp_dict not in self.esense_data[ts_]:
                     self.esense_data[ts_].append(temp_dict)
           self.esense_data = dict(sorted(self.esense_data.items()))
@@ -311,9 +306,9 @@ class zat_consor_node(Node):
           
           temp_var = [True if getattr(self._emotibit_synch_data, attr) not in (None, []) else False 
                       for attr in self._emotibit_streams]
-          # self.get_logger().debug(f"temp_var: {temp_var}")
+          self.get_logger().debug(f"temp_var: {temp_var}")
           if all(temp_var):
-               # self.get_logger().debug(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
+               self.get_logger().debug(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
                self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
 
                # Flatten the msg once all modalities are received
@@ -347,10 +342,10 @@ class zat_consor_node(Node):
                     msg = msg_.temperature[0]
                     s = 'temp'
                
-               # self.get_logger().debug(f"msg_: {msg_}")
+               self.get_logger().debug(f"msg_: {msg_}")
                flattened_data = self._emotibit_flatten_helper_msg(msg, s, emotibit_data)
                flat_emotibit_data = dict(sorted(flattened_data.items()))
-          # self.get_logger().info(f"{flat_emotibit_data.keys()}\n{flat_emotibit_data}\n\n")
+          self.get_logger().debug(f"{flat_emotibit_data.keys()}\n{flat_emotibit_data}\n\n")
           return flat_emotibit_data
 
      def _emotibit_flatten_helper_msg(self, msg, s, emotibit_data):
@@ -360,36 +355,30 @@ class zat_consor_node(Node):
           # msg - EmotibitMsg.msg
           for index, timestamp in enumerate(msg.timestamp):
                temp_dict = {}
-
                ts = timestamp
                ts_ = self.convert_time(ts)
 
                if ts_ not in emotibit_data:
                     emotibit_data[ts_] = []
 
-               # if ts not in emotibit_data[ts_]:
-               #      values.append(ts)
-               
                for fields in msg.__slots__:
                     if fields in ('id'):
                        id_ = msg.id
                        break
                     else:
-                         id_ = 0 # in case of only a single emotibit sensor is present
+                         id_ = 0 # in case of only a single sensor is present
 
                # if 'id' not in emotibit_data[ts_]:
                temp_dict['id'] = id_
-               # self.get_logger().info(f"emotibit_data: {emotibit_data}, temp_dict: {temp_dict}")
+               self.get_logger().debug(f"emotibit_data: {emotibit_data}, temp_dict: {temp_dict}")
 
                # i iterates through each channel
                for i in range(len(msg.data)): # msg.data -> gives access to EmotibitData.msg
                     # Each channel has an EmotibitData.msg, hence if len(msg.data) is more than 1 then a suffix for channel no is added.
                     if len(msg.data) > 1:
                          field_name = f"{s}_{i+1}"
-                         # values.append((f"{s}_{i+1}", msg.data[i].data[index]))
                     else:
                          field_name = f"{s}"
-                         # values.append((f"{s}", msg.data[i].data[index]))
                     field_value = msg.data[i].data[index] # Each datapoint has its own timestamp, hence index of timestamp is used to get the corresponding datavalue/datapoint
                     temp_dict[field_name] = field_value 
                
@@ -438,9 +427,7 @@ class zat_consor_node(Node):
           esense_msg = esense_msg if 'esense_msg' in locals() else {}
 
           for key in movella_msg.keys() | emotibit_msg.keys() | esense_msg.keys(): # combines unique keys from both msgs (keys here are the timestamps in decimals)
-               # self.merged = self.temp_check_sensors_present(key, movella_msg, emotibit_msg, esense_msg) # Option 1: delete the function mentioned in this line and instead, put the code of the function here .
 
-               # Option 2 
                self.merged[key] = {
                     'sensors': []
                }
@@ -461,51 +448,6 @@ class zat_consor_node(Node):
           self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
           self.get_logger().info(f"merged: {self.merged}\n\n")
           logging.debug(f"merged: {self.merged}\n\n")
-
-
-     def temp_check_sensors_present(self, key, movella_msg, emotibit_msg, esense_msg):
-          if key in movella_msg and key in emotibit_msg and key in esense_msg: # if key (i.e., timestamp) is present in both messages
-               self.merged[key] = {
-                    'sensors':['movella', 'emotibit', 'esense'], # this key is to track if there are multiple msgs or individual msgs, can be removed after refactoring final code. ('k': 123)
-                    'movella': movella_msg[key],
-                    'emotibit': emotibit_msg[key],
-                    'esense' : esense_msg[key]
-               }
-          elif key in movella_msg and key in emotibit_msg:
-               self.merged[key] = {
-                    'sensors':['movella', 'emotibit'],                # 'k': 12              
-                    'movella': movella_msg[key],
-                    'emotibit': emotibit_msg[key]
-               }
-          elif key in movella_msg and key in esense_msg:
-               self.merged[key] = {
-                    'sensors':['movella', 'esense'],                  # 'k': 13
-                    'movella': movella_msg[key],
-                    'esense': esense_msg[key]
-               }
-          elif key in esense_msg and key in emotibit_msg:
-               self.merged[key] = {
-                    'sensors':['movella', 'emotibit', 'esense'],      # 'k': 23
-                    'esense': esense_msg[key],
-                    'emotibit': emotibit_msg[key]
-               }
-          elif key in movella_msg:
-               self.merged[key] = {
-                    'sensors':['only movella'],      # 'k': 1
-                    'movella': movella_msg[key]
-               }
-          elif key in emotibit_msg:
-               self.merged[key] = {
-                    'sensors':['only emotibit'],      # 'k': 2
-                    'emotibit': emotibit_msg[key]
-               }
-          else:
-               self.merged[key] = {
-                    'sensors':['only esense'],      # 'k': 3
-                    'esense': esense_msg[key]
-               }
-          return self.merged
-
 
 
 def main():
