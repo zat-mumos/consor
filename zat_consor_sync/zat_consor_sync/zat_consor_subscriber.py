@@ -10,7 +10,7 @@ from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, Emotibit
 
 # # Uncomment lines below (till class definition) to save the output in a specific file mentioned by argument 'file_name'
 # logging.basicConfig(
-#      filename="data_sync_logging8.log",
+#      filename="data_sync_logging14.log",
 #      filemode='a',
 #      format='%(asctime)s - %(levelname)s - %(message)s',
 #      level=logging.DEBUG
@@ -19,6 +19,7 @@ from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, Emotibit
 class zat_consor_node(Node):
      def __init__(
           self,
+          timestamp_precision: int = 1,
           movella_topic: str = '/sensor/movella/imu_data',
           esense_topic: str = '/sensor/esense/data',
           emotibit_accelerometer_topic: str = '/emotibit/acc',
@@ -38,6 +39,7 @@ class zat_consor_node(Node):
           self.declare_parameters(
                namespace='',
                parameters=[
+                    ('timestamp_precision', timestamp_precision),
                     ('movella_topic', movella_topic),
                     ('esense_topic', esense_topic),
                     ('emotibit_accelerometer_topic', emotibit_accelerometer_topic),
@@ -50,7 +52,7 @@ class zat_consor_node(Node):
                     ('consor_wearable_sensor_topic', consor_wearable_sensor_topic)
                ])
 
-
+          timestamp_precision = self.get_parameter('timestamp_precision').value
           movella_topic=self.get_parameter('movella_topic').value
           esense_topic = self.get_parameter('esense_topic').value
           emotibit_accelerometer_topic = self.get_parameter('emotibit_accelerometer_topic').value
@@ -69,6 +71,7 @@ class zat_consor_node(Node):
           self._old_movella_data = None
           self._old_emotibit_synch_data = None
           self._emotibit_streams = ["accelerometer","gyroscope","magnetometer","ppg","eda","temperature"]
+          self._timestamp_precision = timestamp_precision
 
 
           self._movella_subscriber = self.create_subscription(MovellaData,
@@ -189,8 +192,13 @@ class zat_consor_node(Node):
                for data in movella_sensor.data: # msg - MovellaSensor .data  => gives access to fields in MovellaImu
                     temp_dict = {}
                     temp_dict['id'] = movella_sensor.id  # msg - MovellaSensor .id
+                    temp_dict['name'] = 'movella'
+
                     ts = data.header.stamp # header of MovellaImu
                     ts_ = self.convert_time(ts) # convert builtin-interfaces.Time to (double) timestamp 
+
+                    # convert timestamp to required precision
+                    ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
 
                     if ts_ not in self.movella_data:
                          self.movella_data[ts_] = []
@@ -220,9 +228,14 @@ class zat_consor_node(Node):
 
           for data in msg.data:
                temp_dict = {}
+               temp_dict['name'] = 'esense'
+                    
                ts = data.header.stamp
                ts_ = self.convert_time(ts)
 
+               # convert timestamp to required precision
+               ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
+               
                if ts_ not in self.esense_data:
                     self.esense_data[ts_] = []
 
@@ -297,6 +310,7 @@ class zat_consor_node(Node):
           """
           This function combines data from all modalities from emotibit that is published as separate topics into a single msg
           """
+          self.synched_flattened_emotibit_data = defaultdict(list)
 
           if self._emotibit_synch_data is None:
                self._emotibit_synch_data = EmotibitSynchData()
@@ -355,8 +369,13 @@ class zat_consor_node(Node):
           # msg - EmotibitMsg.msg
           for index, timestamp in enumerate(msg.timestamp):
                temp_dict = {}
+               temp_dict['name'] = 'emotibit'
+                    
                ts = timestamp
                ts_ = self.convert_time(ts)
+
+               # convert timestamp to required precision
+               ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
 
                if ts_ not in emotibit_data:
                     emotibit_data[ts_] = []
@@ -428,26 +447,38 @@ class zat_consor_node(Node):
 
           for key in movella_msg.keys() | emotibit_msg.keys() | esense_msg.keys(): # combines unique keys from both msgs (keys here are the timestamps in decimals)
 
-               self.merged[key] = {
-                    'sensors': []
-               }
+               # self.merged[key] = []
 
                if key in movella_msg:
-                    self.merged[key]['sensors'].extend(['movella'])
-                    self.merged[key]['movella'] = movella_msg[key]
+                    # self.get_logger().info(f"len: {len(movella_msg[key])}, \n movella_msg[key]: {movella_msg[key]}")
+                    temp_movella = self.flatten_nested_lists(movella_msg[key])
+                    self.merged[key].extend(temp_movella)
+                    # self.merged[key]['sensors'].extend(['movella'])
+                    # self.merged[key]['movella'] = movella_msg[key]
 
                if key in emotibit_msg:
-                    self.merged[key]['sensors'].extend(['emotibit'])
-                    self.merged[key]['emotibit'] = emotibit_msg[key]
+                    temp_emotibit = self.flatten_nested_lists(emotibit_msg[key])
+                    self.merged[key].extend(temp_emotibit)
+                    # self.merged[key]['sensors'].extend(['emotibit'])
+                    # self.merged[key]['emotibit'] = emotibit_msg[key]
 
                if key in esense_msg:
-                    self.merged[key]['sensors'].extend(['esense'])
-                    self.merged[key]['esense'] = esense_msg[key]
-
+                    temp_esense = self.flatten_nested_lists(esense_msg[key])
+                    self.merged[key].extend(temp_esense)
+                    # self.merged[key]['sensors'].extend(['esense'])
+                    # self.merged[key]['esense'] = esense_msg[key]
 
           self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
           self.get_logger().info(f"merged: {self.merged}\n\n")
           logging.debug(f"merged: {self.merged}\n\n")
+
+     def flatten_nested_lists(self, temp_dict):
+          new_temp = []
+          for k in range(len(temp_dict)):
+               new_temp.append(temp_dict[k])
+          return new_temp
+               
+          
 
 
 def main():
