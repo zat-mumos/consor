@@ -223,13 +223,45 @@ class zat_consor_node(Node):
           self.esense_data = defaultdict(list)
           self.get_logger().info('esense flatten msgs')
 
-          for each_data in msg.data:
-               values = []
-               ts = each_data.header.stamp
+          for data in msg.data:
+               temp_dict = {}
+               ts = data.header.stamp
                ts_ = self.convert_time(ts)
-               values.append((ts, each_data.sample_data))
+
+               if ts_ not in self.esense_data:
+                    self.esense_data[ts_] = []
+
+               for fields in msg.__slots__:
+                    if fields in ('id'):
+                         id_ = msg.id
+                         break
+                    else:
+                         id_ = 0
+               
+               temp_dict['id'] = id_
+
+               field = msg.sensor_type
+               if field == 'temperature':
+                    field_name = 'temp'
+               elif field == 'conductance':
+                    field_name = 'cond'
+               elif field == 'respiration':
+                    field_name = 'resp'
+               elif field == 'tempSimulator':
+                    field_name = 'tempSim'
+               elif field == 'condSimulator':
+                    field_name = 'condSim'
+               elif field == 'respSimulator':
+                    field_name = 'respSim'
+               else:
+                    field_name = 'none'
+
+               temp_dict[field_name] = data.sample_data
+
+               # values.append((ts, each_data.sample_data))
                # self.get_logger().info(f"each data: {each_data}")
-               self.esense_data[ts_] = values
+               if temp_dict not in self.esense_data[ts_]:
+                    self.esense_data[ts_].append(temp_dict)
           self.esense_data = dict(sorted(self.esense_data.items()))
           self.get_logger().info(f"{self.esense_data}\n")
 
