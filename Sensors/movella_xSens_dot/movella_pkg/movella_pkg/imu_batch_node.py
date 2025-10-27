@@ -128,10 +128,9 @@ class MovellabatchNode(Node):
 
     def record__batch_data(self):
 
-        now_msg = self.get_clock().now()
-
         duration_time = rclpy.duration.Duration(nanoseconds=self.buffer_duration_ms * 1e6)
-        starttime = now_msg
+
+        buffer_flag = False # flag to indicate if buffer duration has passed
 
         while rclpy.ok():
             if self.xdpcHandler.packetsAvailable():
@@ -140,6 +139,11 @@ class MovellabatchNode(Node):
                     pkt = self.xdpcHandler.getNextPacket(dev.portInfo().bluetoothAddress())
                     imu_msg = MovellaImu()
                     imu_msg.header.stamp = self.get_clock().now().to_msg()
+
+                    if not buffer_flag:
+
+                        starttime = self.get_clock().now()
+                        buffer_flag = True
 
                     if pkt.containsOrientation():
                         quat = pkt.orientationQuaternion()
@@ -151,10 +155,10 @@ class MovellabatchNode(Node):
                         imu_msg.quat_z = quat[2]
                         imu_msg.quat_w = quat[3]
 
-                        euler = pkt.orientationEuler()
-                        euler_x = euler.x()
-                        euler_y = euler.y()
-                        euler_z = euler.z()
+                        # euler = pkt.orientationEuler()
+                        # euler_x = euler.x()
+                        # euler_y = euler.y()
+                        # euler_z = euler.z()
                         
                         # print start time
                         # self.get_logger().info(f"Time: {self.get_clock().now().to_msg()}")t
@@ -188,6 +192,7 @@ class MovellabatchNode(Node):
                         imu_msg.mag_z = mag[2]
 
                         self.buffer[mac].append(imu_msg)
+
 
 
 
@@ -232,9 +237,7 @@ class MovellabatchNode(Node):
                         # reset the start time
                         self.buffer = defaultdict(list)
                         self.get_logger().info(f"Buffer cleared after {self.buffer_duration_ms} ms")
-                        
-
-                        starttime = self.get_clock().now()
+                        buffer_flag = False
     
 
 
