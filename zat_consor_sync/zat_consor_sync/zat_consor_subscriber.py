@@ -19,7 +19,7 @@ from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, Emotibit
 class zat_consor_node(Node):
      def __init__(
           self,
-          timestamp_precision: int = 1,
+          no_seconds: int = 1e3,
           movella_topic: str = '/sensor/movella/imu_data',
           esense_topic: str = '/sensor/esense/data',
           emotibit_accelerometer_topic: str = '/emotibit/acc',
@@ -39,7 +39,7 @@ class zat_consor_node(Node):
           self.declare_parameters(
                namespace='',
                parameters=[
-                    ('timestamp_precision', timestamp_precision),
+                    ('sync_period', no_seconds),
                     ('movella_topic', movella_topic),
                     ('esense_topic', esense_topic),
                     ('emotibit_accelerometer_topic', emotibit_accelerometer_topic),
@@ -52,7 +52,7 @@ class zat_consor_node(Node):
                     ('consor_wearable_sensor_topic', consor_wearable_sensor_topic)
                ])
 
-          timestamp_precision = self.get_parameter('timestamp_precision').value
+          no_seonds = self.get_parameter('sync_period').value
           movella_topic=self.get_parameter('movella_topic').value
           esense_topic = self.get_parameter('esense_topic').value
           emotibit_accelerometer_topic = self.get_parameter('emotibit_accelerometer_topic').value
@@ -71,7 +71,7 @@ class zat_consor_node(Node):
           self._old_movella_data = None
           self._old_emotibit_synch_data = None
           self._emotibit_streams = ["accelerometer","gyroscope","magnetometer","ppg","eda","temperature"]
-          self._timestamp_precision = timestamp_precision
+          self._no_seconds = no_seconds
 
 
           self._movella_subscriber = self.create_subscription(MovellaData,
@@ -198,7 +198,7 @@ class zat_consor_node(Node):
                     ts_ = self.convert_time(ts) # convert builtin-interfaces.Time to (double) timestamp 
 
                     # convert timestamp to required precision
-                    ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
+                    ts_ = round(ts_ * self._no_seconds) / self._no_seconds
 
                     if ts_ not in self.movella_data:
                          self.movella_data[ts_] = []
@@ -234,7 +234,7 @@ class zat_consor_node(Node):
                ts_ = self.convert_time(ts)
 
                # convert timestamp to required precision
-               ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
+               ts_ = round(ts_ * self._no_seconds) / self._no_seconds
                
                if ts_ not in self.esense_data:
                     self.esense_data[ts_] = []
@@ -375,7 +375,7 @@ class zat_consor_node(Node):
                ts_ = self.convert_time(ts)
 
                # convert timestamp to required precision
-               ts_ = round(ts_ * self._timestamp_precision) / self._timestamp_precision
+               ts_ = round(ts_ * self._no_seconds) / self._no_seconds
 
                if ts_ not in emotibit_data:
                     emotibit_data[ts_] = []
