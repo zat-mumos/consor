@@ -183,11 +183,11 @@ class zat_consor_node(Node):
                          if data[i]['name'] == 'movella':
                               msg2.name = 1 #data[i]['name']
                          elif data[i]['name'] == 'emotibit':
-                              msg2.name = 2 #data[i]['name']
+                              msg2.name = 2
                          elif data[i]['name'] == 'esense':
-                              msg2.name = 3 #data[i]['name']
+                              msg2.name = 3
                          else:
-                              msg2.name = 0 #data[i]['name']
+                              msg2.name = 0
                          msg2.device_id = str(data[i]['id'])
 
                          if k not in ('name', 'id'):
@@ -200,6 +200,8 @@ class zat_consor_node(Node):
 
           self._consor_publisher.publish(msg)
           self._sync_publisher.publish(main_msg)
+
+          self.get_logger().info(f"Published synced data")
 
           for name, (new_data, old_data) in sensors.items():
                cur_val = getattr(self, new_data)
@@ -221,7 +223,7 @@ class zat_consor_node(Node):
 
      def _flatten_movella_data(self, msg):
           self.movella_data = defaultdict(list)
-          self.get_logger().info("flatten msgs")
+          self.get_logger().debug("flatten msgs")
           
           for movella_sensor in msg.data: # msg - MovellaData .data
                for data in movella_sensor.data: # msg - MovellaSensor .data  => gives access to fields in MovellaImu
@@ -230,7 +232,7 @@ class zat_consor_node(Node):
                     temp_dict['name'] = 'movella'
 
                     ts = data.header.stamp # header of MovellaImu
-                    ts_ = self.convert_time(ts, True) # convert builtin-interfaces.Time to (double) timestamp 
+                    ts_ = self.convert_time(ts) # convert builtin-interfaces.Time to (double) timestamp 
 
                     # convert timestamp to required precision
                     ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -245,7 +247,7 @@ class zat_consor_node(Node):
                               temp_dict[field_name] = field_value
                               self.get_logger().debug(f"fields: {fields.strip('_')}, {getattr(data, fields)}")
                     
-                    self.get_logger().info(f"temp_dict: {temp_dict}")
+                    self.get_logger().debug(f"temp_dict: {temp_dict}")
                     
                     if temp_dict not in self.movella_data[ts_]:
                          self.movella_data[ts_].append(temp_dict) 
@@ -259,14 +261,14 @@ class zat_consor_node(Node):
      
      def _flatten_esense_data(self, msg):
           self.esense_data = defaultdict(list)
-          self.get_logger().info('esense flatten msgs')
+          self.get_logger().debug('esense flatten msgs')
 
           for data in msg.data:
                temp_dict = {}
                temp_dict['name'] = 'esense'
                     
                ts = data.header.stamp
-               ts_ = self.convert_time(ts, True)
+               ts_ = self.convert_time(ts)
 
                # convert timestamp to required precision
                ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -301,12 +303,11 @@ class zat_consor_node(Node):
 
                temp_dict[field_name] = data.sample_data
 
-               # values.append((ts, each_data.sample_data))
                self.get_logger().debug(f"each data: {data}")
                if temp_dict not in self.esense_data[ts_]:
                     self.esense_data[ts_].append(temp_dict)
           self.esense_data = dict(sorted(self.esense_data.items()))
-          self.get_logger().info(f"{self.esense_data}\n")
+          self.get_logger().debug(f"{self.esense_data}\n")
 
 
      # Since each modality in emotibit has its own ros2 topic, when new msgs are received emotibit_sync() is called
@@ -407,7 +408,7 @@ class zat_consor_node(Node):
                temp_dict['name'] = 'emotibit'
                     
                ts = timestamp
-               ts_ = self.convert_time(ts, True)
+               ts_ = self.convert_time(ts)
 
                # convert timestamp to required precision
                ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -452,7 +453,7 @@ class zat_consor_node(Node):
      
 
 
-     def convert_time(self, timestamp, bool_to_nanos: bool =False):
+     def convert_time(self, timestamp, bool_to_nanos: bool =True):
           if bool_to_nanos:
                seconds = timestamp.sec
                nanosec = timestamp.nanosec * 1e-9
@@ -491,26 +492,19 @@ class zat_consor_node(Node):
                # self.merged[key] = []
 
                if key in movella_msg:
-                    # self.get_logger().info(f"len: {len(movella_msg[key])}, \n movella_msg[key]: {movella_msg[key]}")
                     temp_movella = self.flatten_nested_lists(movella_msg[key])
                     self.merged[key].extend(temp_movella)
-                    # self.merged[key]['sensors'].extend(['movella'])
-                    # self.merged[key]['movella'] = movella_msg[key]
 
                if key in emotibit_msg:
                     temp_emotibit = self.flatten_nested_lists(emotibit_msg[key])
                     self.merged[key].extend(temp_emotibit)
-                    # self.merged[key]['sensors'].extend(['emotibit'])
-                    # self.merged[key]['emotibit'] = emotibit_msg[key]
 
                if key in esense_msg:
                     temp_esense = self.flatten_nested_lists(esense_msg[key])
                     self.merged[key].extend(temp_esense)
-                    # self.merged[key]['sensors'].extend(['esense'])
-                    # self.merged[key]['esense'] = esense_msg[key]
 
           self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
-          self.get_logger().info(f"merged: {self.merged}\n\n")
+          self.get_logger().debug(f"merged: {self.merged}\n\n")
           logging.debug(f"merged: {self.merged}\n\n")
 
      def flatten_nested_lists(self, temp_dict):
