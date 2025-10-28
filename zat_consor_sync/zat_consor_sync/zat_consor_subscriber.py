@@ -3,14 +3,15 @@ from collections import defaultdict
 import rclpy
 from rclpy.node import Node
 from rclpy.logging import LoggingSeverity
+from builtin_interfaces.msg import Time 
 import cv2
 import numpy as np
 import logging 
-from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData,  EsenseStream
+from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchedData, Sync
 
 # # Uncomment lines below (till class definition) to save the output in a specific file mentioned by argument 'file_name'
 # logging.basicConfig(
-#      filename="data_sync_logging14.log",
+#      filename="data_sync_logging20-1.log",
 #      filemode='a',
 #      format='%(asctime)s - %(levelname)s - %(message)s',
 #      level=logging.DEBUG
@@ -19,7 +20,7 @@ from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, Emotibit
 class zat_consor_node(Node):
      def __init__(
           self,
-          no_seconds: int = 1e3,
+          no_seconds: int = 1,
           movella_topic: str = '/sensor/movella/imu_data',
           esense_topic: str = '/sensor/esense/data',
           emotibit_accelerometer_topic: str = '/emotibit/acc',
@@ -29,7 +30,8 @@ class zat_consor_node(Node):
           emotibit_eda_topic: str = '/emotibit/eda',
           emotibit_temperature_topic: str = '/emotibit/temp',
           emotibit_synch_topic: str = 'sensor/emotibit/data',
-          consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data'):
+          consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data',
+          sync_topic: str = 'sensor/synched/data'):
 
 
           super().__init__('zat_consor_node')
@@ -49,10 +51,11 @@ class zat_consor_node(Node):
                     ('emotibit_eda_topic', emotibit_eda_topic),
                     ('emotibit_temperature_topic', emotibit_temperature_topic),
                     ('emotibit_synch_topic', emotibit_synch_topic),
-                    ('consor_wearable_sensor_topic', consor_wearable_sensor_topic)
+                    ('consor_wearable_sensor_topic', consor_wearable_sensor_topic),
+                    ('sync_topic', sync_topic)
                ])
 
-          no_seonds = self.get_parameter('sync_period').value
+          no_seconds = self.get_parameter('sync_period').value
           movella_topic=self.get_parameter('movella_topic').value
           esense_topic = self.get_parameter('esense_topic').value
           emotibit_accelerometer_topic = self.get_parameter('emotibit_accelerometer_topic').value
@@ -63,6 +66,7 @@ class zat_consor_node(Node):
           emotibit_temperature_topic = self.get_parameter('emotibit_temperature_topic').value
           emotibit_synch_topic = self.get_parameter('emotibit_synch_topic').value
           consor_wearable_sensor_topic=self.get_parameter('consor_wearable_sensor_topic').value 
+          sync_topic=self.get_parameter('sync_topic').value 
 
           self._esense_data = None
           self._movella_data = None
@@ -119,6 +123,7 @@ class zat_consor_node(Node):
                                                                10)
         
           self._consor_publisher=self.create_publisher(ZatConsorSynch,consor_wearable_sensor_topic,10)
+          self._sync_publisher=self.create_publisher(SynchedData,sync_topic,10)
 
           timer_period=0.5
           self.timer=self.create_timer(timer_period,self.timer_callback)
@@ -163,8 +168,38 @@ class zat_consor_node(Node):
           
           self.merge_data(dict_msgs)
 
+          main_msg = SynchedData()
+          for key in self.merged.keys():
+               batch_sync = []
+               
+               timestamp = self.convert_time(key, False)
+               main_msg.header.stamp = timestamp
+
+               data = self.merged[key]
+               for i in range(len(data)):
+                    self.get_logger().debug(f"self.merged[key][i]: {data[i]}")
+                    for k, v in data[i].items():
+                         msg2 = Sync()
+                         if data[i]['name'] == 'movella':
+                              msg2.name = 1 #data[i]['name']
+                         elif data[i]['name'] == 'emotibit':
+                              msg2.name = 2 #data[i]['name']
+                         elif data[i]['name'] == 'esense':
+                              msg2.name = 3 #data[i]['name']
+                         else:
+                              msg2.name = 0 #data[i]['name']
+                         msg2.device_id = str(data[i]['id'])
+
+                         if k not in ('name', 'id'):
+                              msg2.modality_name = k
+                              msg2.value = v
+                              batch_sync.append(msg2)
+               main_msg.data = batch_sync
+               self.get_logger().debug(f"-------- \nmain_msg: {main_msg} \n----------------------")
+               logging.debug(f"Main msg: {main_msg}")
 
           self._consor_publisher.publish(msg)
+          self._sync_publisher.publish(main_msg)
 
           for name, (new_data, old_data) in sensors.items():
                cur_val = getattr(self, new_data)
@@ -195,7 +230,7 @@ class zat_consor_node(Node):
                     temp_dict['name'] = 'movella'
 
                     ts = data.header.stamp # header of MovellaImu
-                    ts_ = self.convert_time(ts) # convert builtin-interfaces.Time to (double) timestamp 
+                    ts_ = self.convert_time(ts, True) # convert builtin-interfaces.Time to (double) timestamp 
 
                     # convert timestamp to required precision
                     ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -231,7 +266,7 @@ class zat_consor_node(Node):
                temp_dict['name'] = 'esense'
                     
                ts = data.header.stamp
-               ts_ = self.convert_time(ts)
+               ts_ = self.convert_time(ts, True)
 
                # convert timestamp to required precision
                ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -372,7 +407,7 @@ class zat_consor_node(Node):
                temp_dict['name'] = 'emotibit'
                     
                ts = timestamp
-               ts_ = self.convert_time(ts)
+               ts_ = self.convert_time(ts, True)
 
                # convert timestamp to required precision
                ts_ = round(ts_ * self._no_seconds) / self._no_seconds
@@ -417,11 +452,17 @@ class zat_consor_node(Node):
      
 
 
-     def convert_time(self, header):
-          seconds = header.sec
-          nanosec = header.nanosec * 1e-9
+     def convert_time(self, timestamp, bool_to_nanos: bool =False):
+          if bool_to_nanos:
+               seconds = timestamp.sec
+               nanosec = timestamp.nanosec * 1e-9
 
-          time = seconds + nanosec
+               time = seconds + nanosec
+          else:
+               time = Time()
+               time.sec = int(timestamp)
+               time.nanosec = int((timestamp % 1) * 1e9)
+
           return time
      
 
