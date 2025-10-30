@@ -9,14 +9,6 @@ import numpy as np
 import logging 
 from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchData, DataPoint
 
-# # Uncomment lines below (till class definition) to save the output in a specific file mentioned by argument 'file_name'
-# logging.basicConfig(
-#      filename="data_sync_logging20-1.log",
-#      filemode='a',
-#      format='%(asctime)s - %(levelname)s - %(message)s',
-#      level=logging.DEBUG
-# )
-
 class ZatConsorNode(Node):
      def __init__(
           self,
@@ -36,7 +28,6 @@ class ZatConsorNode(Node):
 
           super().__init__('zat_consor_node')
 
-          # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
 
           self.declare_parameters(
                namespace='',
@@ -74,68 +65,68 @@ class ZatConsorNode(Node):
           self._old_esense_data = None
           self._old_movella_data = None
           self._old_emotibit_synch_data = None
-          self._emotibit_streams = ["accelerometer","gyroscope","magnetometer","ppg","eda","temperature"]
+          self._emotibit_streams = ["accelerometer", "gyroscope", "magnetometer", "ppg", "eda", "temperature"]
           self._no_seconds = no_seconds
 
 
-          self._movella_subscriber = self.create_subscription(MovellaData,
-                                                            movella_topic,
-                                                            self._movella_callback,
-                                                            10)
+          self._movella_subscriber = self.create_subscription(MovellaData, 
+                                                              movella_topic, 
+                                                              self._movella_callback, 
+                                                              10)
         
-          self._esense_subscriber = self.create_subscription(EsenseStream,
-                                                           esense_topic,
-                                                           self._esense_callback,
-                                                           10)
+          self._esense_subscriber = self.create_subscription(EsenseStream, 
+                                                             esense_topic, 
+                                                             self._esense_callback, 
+                                                             10)
         
-          self._emotibit_accelerometer_subscriber = self.create_subscription(EmotibitMsg,
-                                                                    emotibit_accelerometer_topic,
-                                                                    self._emotibit_accelerometer_callback,
-                                                                    10)
+          self._emotibit_accelerometer_subscriber = self.create_subscription(EmotibitMsg, 
+                                                                             emotibit_accelerometer_topic, 
+                                                                             self._emotibit_accelerometer_callback, 
+                                                                             10)
         
           self._emotibit_gyroscope_subscriber = self.create_subscription(EmotibitMsg,
-                                                                    emotibit_gyroscope_topic,
-                                                                    self._emotibit_gyroscope_callback,
-                                                                    10)
+                                                                         emotibit_gyroscope_topic, 
+                                                                         self._emotibit_gyroscope_callback, 
+                                                                         10)
         
-          self._emotibit_magnetometer_subscriber = self.create_subscription(EmotibitMsg,
-                                                                    emotibit_magnetometer_topic,
-                                                                    self._emotibit_magnetometer_callback,
-                                                                    10)
+          self._emotibit_magnetometer_subscriber = self.create_subscription(EmotibitMsg, 
+                                                                            emotibit_magnetometer_topic, 
+                                                                            self._emotibit_magnetometer_callback, 
+                                                                            10)
         
-          self._emotibit_ppg_subscriber = self.create_subscription(EmotibitMsg,
-                                                               emotibit_ppg_topic,
-                                                               self._emotibit_ppg_callback,
-                                                               10)
+          self._emotibit_ppg_subscriber = self.create_subscription(EmotibitMsg, 
+                                                                   emotibit_ppg_topic, 
+                                                                   self._emotibit_ppg_callback, 
+                                                                   10)
         
-          self._emotibit_eda_subscriber = self.create_subscription(EmotibitMsg,
-                                                               emotibit_eda_topic,
-                                                               self._emotibit_eda_callback,
-                                                               10)
+          self._emotibit_eda_subscriber = self.create_subscription(EmotibitMsg, 
+                                                                   emotibit_eda_topic, 
+                                                                   self._emotibit_eda_callback, 
+                                                                   10)
         
-          self._emotibit_temperature_subscriber = self.create_subscription(EmotibitMsg,
-                                                               emotibit_temperature_topic,
-                                                               self._emotibit_temperature_callback,
-                                                               10)
+          self._emotibit_temperature_subscriber = self.create_subscription(EmotibitMsg, 
+                                                                           emotibit_temperature_topic, 
+                                                                           self._emotibit_temperature_callback, 
+                                                                           10)
         
-          self._emotibit_synch_publisher = self.create_publisher(EmotibitSynchData,
-                                                               emotibit_synch_topic,
-                                                               10)
+          self._emotibit_synch_publisher = self.create_publisher(EmotibitSynchData, 
+                                                                 emotibit_synch_topic, 
+                                                                 10)
         
-          self._consor_publisher=self.create_publisher(ZatConsorSynch,consor_wearable_sensor_topic,10)
-          self._sync_publisher=self.create_publisher(SynchData,sync_topic,10)
+          self._consor_publisher = self.create_publisher(ZatConsorSynch, consor_wearable_sensor_topic, 10)
+          self._sync_publisher = self.create_publisher(SynchData, sync_topic, 10)
 
-          timer_period=0.5
-          self.timer=self.create_timer(timer_period,self.timer_callback)
+          timer_period = 0.5
+          self.timer = self.create_timer(timer_period, self.timer_callback)
 
      def timer_callback(self):
           """to publish the synchronized data of the wearble sensors"""
           
-          msg=ZatConsorSynch()
+          msg = ZatConsorSynch()
 
           sensors = {"esense": ("_esense_data", "_old_esense_data"),
-                    "movella": ("_movella_data", "_old_movella_data"),
-                    "emotibit": ("_emotibit_synch_data", "_old_emotibit_synch_data")}
+                     "movella": ("_movella_data", "_old_movella_data"),
+                     "emotibit": ("_emotibit_synch_data", "_old_emotibit_synch_data")}
             
           final_data = {}
           used_new = []
