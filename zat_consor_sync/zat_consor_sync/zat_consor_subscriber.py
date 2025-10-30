@@ -7,7 +7,7 @@ from builtin_interfaces.msg import Time
 import cv2
 import numpy as np
 import logging 
-from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchedData, Sync
+from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchData, DataPoint
 
 # # Uncomment lines below (till class definition) to save the output in a specific file mentioned by argument 'file_name'
 # logging.basicConfig(
@@ -123,7 +123,7 @@ class zat_consor_node(Node):
                                                                10)
         
           self._consor_publisher=self.create_publisher(ZatConsorSynch,consor_wearable_sensor_topic,10)
-          self._sync_publisher=self.create_publisher(SynchedData,sync_topic,10)
+          self._sync_publisher=self.create_publisher(SynchData,sync_topic,10)
 
           timer_period=0.5
           self.timer=self.create_timer(timer_period,self.timer_callback)
@@ -168,7 +168,7 @@ class zat_consor_node(Node):
           
           self.merge_data(dict_msgs)
 
-          main_msg = SynchedData()
+          main_msg = SynchData()
           for key in self.merged.keys():
                batch_sync = []
                
@@ -179,15 +179,15 @@ class zat_consor_node(Node):
                for i in range(len(data)):
                     self.get_logger().debug(f"self.merged[key][i]: {data[i]}")
                     for k, v in data[i].items():
-                         msg2 = Sync()
+                         msg2 = DataPoint()
                          if data[i]['name'] == 'movella':
-                              msg2.name = 1 #data[i]['name']
+                              msg2.device_name = 1 #data[i]['name']
                          elif data[i]['name'] == 'emotibit':
-                              msg2.name = 2
+                              msg2.device_name = 2
                          elif data[i]['name'] == 'esense':
-                              msg2.name = 3
+                              msg2.device_name = 3
                          else:
-                              msg2.name = 0
+                              msg2.device_name = 0
                          msg2.device_id = str(data[i]['id'])
 
                          if k not in ('name', 'id'):
