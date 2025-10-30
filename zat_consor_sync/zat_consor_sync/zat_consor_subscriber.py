@@ -17,7 +17,7 @@ from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, Emotibit
 #      level=logging.DEBUG
 # )
 
-class zat_consor_node(Node):
+class ZatConsorNode(Node):
      def __init__(
           self,
           no_seconds: int = 1,
@@ -518,7 +518,7 @@ class zat_consor_node(Node):
 
 def main():
      rclpy.init(args= None)
-     consor =  zat_consor_node(
+     consor =  ZatConsorNode(
           movella_topic = '/sensor/movella/imu_data',
           esense_topic = '/sensor/esense/data',
           emotibit_accelerometer_topic = '/emotibit/acc',
