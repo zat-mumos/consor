@@ -8,11 +8,12 @@ import cv2
 import numpy as np
 import logging 
 from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchData, DataPoint
+import math
 
 class ZatConsorNode(Node):
      def __init__(
           self,
-          no_seconds: int = 1,
+          no_seconds: float = 0.001,
           movella_topic: str = '/sensor/movella/imu_data',
           esense_topic: str = '/sensor/esense/data',
           emotibit_accelerometer_topic: str = '/emotibit/acc',
@@ -66,7 +67,9 @@ class ZatConsorNode(Node):
           self._old_movella_data = None
           self._old_emotibit_synch_data = None
           self._emotibit_streams = ["accelerometer", "gyroscope", "magnetometer", "ppg", "eda", "temperature"]
-          self._no_seconds = no_seconds
+          self._no_seconds = 10 ** abs(int(math.log10(no_seconds)))
+          self.get_logger().info(f"Precision: {no_seconds}")
+          self.get_logger().debug(f"exponential: {self._no_seconds}")
 
 
           self._movella_subscriber = self.create_subscription(MovellaData, 
