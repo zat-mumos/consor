@@ -409,8 +409,8 @@ class ZatConsorNode(Node):
 
                for fields in msg.__slots__:
                     if fields in ('id'):
-                       id_ = msg.id
-                       break
+                         id_ = msg.id
+                         break
                     else:
                          id_ = 0 # in case of only a single sensor is present
 
@@ -427,7 +427,6 @@ class ZatConsorNode(Node):
                          field_name = f"{s}"
                     field_value = msg.data[i].data[index] # Each datapoint has its own timestamp, hence index of timestamp is used to get the corresponding datavalue/datapoint
                     temp_dict[field_name] = field_value 
-               
                if temp_dict not in emotibit_data[ts_]:
                     id_found = False
                     temp_index = 0
@@ -442,13 +441,10 @@ class ZatConsorNode(Node):
                          emotibit_data[ts_].append(temp_dict)
           return emotibit_data
      
-
-
      def convert_time(self, timestamp, bool_to_nanos: bool =True):
           if bool_to_nanos:
                seconds = timestamp.sec
                nanosec = timestamp.nanosec * 1e-9
-
                time = seconds + nanosec
           else:
                time = Time()
@@ -457,8 +453,6 @@ class ZatConsorNode(Node):
 
           return time
      
-
-
      def merge_data(self, dict_msgs:dict):
           """
           A function to merge data from multiple sensors into a single variable, synched w.r.t. the sample's timestamps
@@ -479,9 +473,6 @@ class ZatConsorNode(Node):
           esense_msg = esense_msg if 'esense_msg' in locals() else {}
 
           for key in movella_msg.keys() | emotibit_msg.keys() | esense_msg.keys(): # combines unique keys from both msgs (keys here are the timestamps in decimals)
-
-               # self.merged[key] = []
-
                if key in movella_msg:
                     temp_movella = self.flatten_nested_lists(movella_msg[key])
                     self.merged[key].extend(temp_movella)
@@ -504,9 +495,6 @@ class ZatConsorNode(Node):
                new_temp.append(temp_dict[k])
           return new_temp
                
-          
-
-
 def main():
      rclpy.init(args= None)
      consor =  ZatConsorNode(
