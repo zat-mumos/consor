@@ -165,8 +165,9 @@ class ZatConsorNode(Node):
           main_msg = SynchData()
           for key in self.merged.keys():
                batch_sync = []
-               
+               self.get_logger().debug(f"timestamp key: {key}")
                timestamp = self.convert_time(key, False)
+               self.get_logger().debug(f"timestamp key: {timestamp}")
                main_msg.header.stamp = timestamp
 
                data = self.merged[key]
@@ -452,7 +453,9 @@ class ZatConsorNode(Node):
           else:
                time = Time()
                time.sec = int(timestamp)
-               time.nanosec = int((timestamp % 1) * 1e9)
+               temp_var = round((timestamp % 1) * self._no_seconds) # get no. of digits according to precision (dynamic to user input) instead of (fixed) nanoseconds
+               time.nanosec = int(temp_var)
+               self.get_logger().debug(f"Timestamp: {timestamp} ; nanos: {time.nanosec}")
 
           return time
      
