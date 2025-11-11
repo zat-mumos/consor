@@ -58,3 +58,13 @@
     - If still facing issues, try connecting all devices (EmotiBit sensors + Linux system(s)) to a local WiFi hotspot. 
 - If any error (such as BOARD_NOT_READY_ERROR) occurs, wait for a few seconds and run ros2 launch command again.
 
+
+### Data Streams
+
+- Accelerometer (3 channels)
+- Gyroscope (3 channels)
+- Magnetometer (3 channels)
+- PPG (3 channels)
+- EDA (1 channel)
+- Temperature (1 channel)
+
