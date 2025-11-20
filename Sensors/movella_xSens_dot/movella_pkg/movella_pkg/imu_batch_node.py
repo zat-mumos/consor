@@ -45,6 +45,8 @@ class MovellabatchNode(Node):
 
         self.xdpcHandler.connectDots()
 
+
+
         self.declare_parameter('output_rate', 1)
 
         self.declare_parameter('imu_topic', '/sensor/movella/imu_data')
@@ -91,8 +93,54 @@ class MovellabatchNode(Node):
             if not dev.setOnboardFilterProfile("General"):
                 self.get_logger().error("Could not set filter profile")
 
-            if not dev.startMeasurement(movelladot_pc_sdk.XsPayloadMode_CustomMode4):
-                self.get_logger().error("Could not start measurement mode")
+            # if not dev.startMeasurement(movelladot_pc_sdk.XsPayloadMode_CustomMode4):
+            #     self.get_logger().error("Could not start measurement mode")
+
+        ## initial measurement mandatory for calibration
+
+        orientationResetDone = False
+
+        for device in self.xdpcHandler.connectedDots():
+            if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_OrientationEuler):
+                self.get_logger().error(f"Could not start measurement mode for device {device.portInfo().bluetoothAddress()}")
+
+        self.get_logger().info("Collecting data for 10 seconds to stabilize orientation...")
+
+        startTime = movelladot_pc_sdk.XsTimeStamp_nowMs()
+
+        while movelladot_pc_sdk.XsTimeStamp_nowMs() - startTime <= 10000:
+
+            if self.xdpcHandler.packetsAvailable():
+                s = ""
+                for device in self.xdpcHandler.connectedDots():
+                    # Retrieve a packet
+                    packet = self.xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
+
+                    if packet.containsOrientation():
+                        euler = packet.orientationEuler()
+                        s += f"Roll:{euler.x():7.2f}, Pitch:{euler.y():7.2f}, Yaw:{euler.z():7.2f}| "
+
+                self.get_logger().info("%s\r" % s)
+
+
+        ## Reset heading
+        for device in self.xdpcHandler.connectedDots():
+            self.get_logger().info(f"Resetting heading for device {device.portInfo().bluetoothAddress()}: ")
+            if device.resetOrientation(movelladot_pc_sdk.XRM_Heading):
+                self.get_logger().info("OK")
+            else:
+                self.get_logger().info(f"NOK: {device.lastResultText()}")
+            
+            device.stopMeasurement()
+        self.get_logger().info("-----------------------------------------")
+
+        ## Switch to desired measurement mode
+
+        for device in self.xdpcHandler.connectedDots():
+            if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_CustomMode4):
+                self.get_logger().error(f"Could not start measurement mode for device {device.portInfo().bluetoothAddress()}")
+
+
         
         
         # buffer batch publisher
