@@ -1,6 +1,7 @@
 import sys
-import os
+import os,time
 import rclpy
+import threading
 from rclpy.node import Node
 from rclpy.logging import get_logger
 from std_msgs.msg import String  # Publish JSON as String messages
@@ -171,16 +172,22 @@ class MovellabatchNode(Node):
 
         # self.start_time = self.get_clock().now().to_msg()
         # self.logger.info(f"data collection from {self.start_time} for {self.buffer_duration} sec")
+        self.record_data_flag = True
+        self.worker_thread = threading.Thread(target=self.record_batch_data)
+        self.worker_thread.daemon = True
+        self.worker_thread.start()
 
-        self.record__batch_data()
 
-    def record__batch_data(self):
+
+        # self.record__batch_data()
+
+    def record_batch_data(self):
 
         duration_time = rclpy.duration.Duration(nanoseconds=self.buffer_duration_ms * 1e6)
 
         buffer_flag = False # flag to indicate if buffer duration has passed
 
-        while rclpy.ok():
+        while self.record_data_flag:
             if self.xdpcHandler.packetsAvailable():
                 for dev in self.xdpcHandler.connectedDots():
                     mac = dev.portInfo().bluetoothAddress()
@@ -299,12 +306,12 @@ def main(args=None):
     except KeyboardInterrupt:
         
         node.stop_measurement()
-
-
     finally:
+        node.record_data_flag = False
+        node.worker_thread.join(timeout=1.0)
+        node.xdpcHandler.cleanup()
+        time.sleep(3)
         node.destroy_node()
-        
-        XdpcHandler.cleanup()
         rclpy.shutdown()
 
 if __name__ == '__main__':
