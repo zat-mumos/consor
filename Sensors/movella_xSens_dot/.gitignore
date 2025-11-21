@@ -1,0 +1,7 @@
+cat <<EOF > .gitignore
+# OS & editor cruft
+.DS_Store
+*.swp
+movella_pkg/movella_sdk/
+.vscode/
+EOF
