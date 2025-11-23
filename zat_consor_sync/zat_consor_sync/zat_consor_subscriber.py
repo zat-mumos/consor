@@ -432,17 +432,7 @@ class ZatConsorNode(Node):
                     field_value = msg.data[i].data[index] # Each datapoint has its own timestamp, hence index of timestamp is used to get the corresponding datavalue/datapoint
                     temp_dict[field_name] = field_value 
                if temp_dict not in emotibit_data[ts_]:
-                    id_found = False
-                    temp_index = 0
-                    for t in range(len(emotibit_data[ts_])):
-                         if temp_dict['id'] == emotibit_data[ts_][t]['id']:
-                              id_found = True
-                              temp_index = t
-                              break
-                    if id_found:
-                         emotibit_data[ts_][temp_index].update(temp_dict)
-                    else: 
-                         emotibit_data[ts_].append(temp_dict)
+                    emotibit_data[ts_].append(temp_dict)
           return emotibit_data
      
      def convert_time(self, timestamp, bool_to_nanos: bool =True):
