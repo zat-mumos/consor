@@ -245,7 +245,17 @@ class ZatConsorNode(Node):
                     self.get_logger().debug(f"temp_dict: {temp_dict}")
                     
                     if temp_dict not in self.movella_data[ts_]:
-                         self.movella_data[ts_].append(temp_dict) 
+                         id_found = False
+                         temp_index = 0
+                         for t in range(len(self.movella_data[ts_])):
+                              if temp_dict['id'] == self.movella_data[ts_][t]['id']:
+                                   id_found = True
+                                   temp_index = t
+                                   break
+                         if id_found:
+                              self.movella_data[ts_][temp_index].update(temp_dict)
+                         else:
+                              self.movella_data[ts_].append(temp_dict) 
                self.movella_data = dict(sorted(self.movella_data.items()))
 
 
@@ -300,7 +310,17 @@ class ZatConsorNode(Node):
 
                self.get_logger().debug(f"each data: {data}")
                if temp_dict not in self.esense_data[ts_]:
-                    self.esense_data[ts_].append(temp_dict)
+                    id_found = False
+                    temp_index = 0
+                    for t in range(len(self.esense_data[ts_])):
+                         if temp_dict['id'] == self.esense_data[ts_][t]['id']:
+                              id_found = True
+                              temp_index = t
+                              break
+                    if id_found:
+                         self.esense_data[ts_][temp_index].update(temp_dict)
+                    else: 
+                         self.esense_data[ts_].append(temp_dict)
           self.esense_data = dict(sorted(self.esense_data.items()))
           self.get_logger().debug(f"{self.esense_data}\n")
 
@@ -432,7 +452,17 @@ class ZatConsorNode(Node):
                     field_value = msg.data[i].data[index] # Each datapoint has its own timestamp, hence index of timestamp is used to get the corresponding datavalue/datapoint
                     temp_dict[field_name] = field_value 
                if temp_dict not in emotibit_data[ts_]:
-                    emotibit_data[ts_].append(temp_dict)
+                    id_found = False
+                    temp_index = 0
+                    for t in range(len(emotibit_data[ts_])):
+                         if temp_dict['id'] == emotibit_data[ts_][t]['id']:
+                              id_found = True
+                              temp_index = t
+                              break
+                    if id_found:
+                         emotibit_data[ts_][temp_index].update(temp_dict)
+                    else: 
+                         emotibit_data[ts_].append(temp_dict)
           return emotibit_data
      
      def convert_time(self, timestamp, bool_to_nanos: bool =True):
@@ -483,7 +513,7 @@ class ZatConsorNode(Node):
 
           self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
           self.get_logger().debug(f"merged: {self.merged}\n\n")
-          logging.debug(f"merged: {self.merged}\n\n")
+          # logging.debug(f"merged: {self.merged}\n\n")
 
      def flatten_nested_lists(self, temp_dict):
           new_temp = []
