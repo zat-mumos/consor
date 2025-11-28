@@ -177,6 +177,8 @@ class MovellabatchNode(Node):
         self.worker_thread.daemon = True
         self.worker_thread.start()
 
+        self.get_logger().info("The thread has started")
+
 
 
         # self.record__batch_data()
@@ -303,6 +305,7 @@ def main(args=None):
 
     try:
         rclpy.spin(node)
+        print("The init is done")
     except KeyboardInterrupt:
         
         node.stop_measurement()
