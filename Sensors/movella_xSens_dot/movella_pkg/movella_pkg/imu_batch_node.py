@@ -228,7 +228,7 @@ class MovellabatchNode(Node):
                         imu_msg.ay = acc[1]
                         imu_msg.az = acc[2]
 
-                        self.buffer[mac].append(imu_msg)
+                        # self.buffer[mac].append(imu_msg)
                     
                     if pkt.containsCalibratedGyroscopeData():
                         gyr = pkt.calibratedGyroscopeData()
@@ -238,7 +238,7 @@ class MovellabatchNode(Node):
                         imu_msg.gyro_y = gyr[1]
                         imu_msg.gyro_z = gyr[2]
 
-                        self.buffer[mac].append(imu_msg)
+                        # self.buffer[mac].append(imu_msg)
 
                     if pkt.containsCalibratedMagneticField():
                         mag = pkt.calibratedMagneticField()
@@ -248,7 +248,8 @@ class MovellabatchNode(Node):
                         imu_msg.mag_y = mag[1]
                         imu_msg.mag_z = mag[2]
 
-                        self.buffer[mac].append(imu_msg)
+                        
+                    self.buffer[mac].append(imu_msg)
 
 
 
