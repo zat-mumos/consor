@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-from collections import defaultdict
+from collections import defaultdict, deque
+from decimal import Decimal
+import threading
+
 import rclpy
 from rclpy.node import Node
 from rclpy.logging import LoggingSeverity
@@ -9,6 +12,7 @@ import numpy as np
 import logging 
 from zat_ros2_msgs.msg import MovellaData, ZatConsorSynch, EmotibitMsg, EmotibitSynchData, EsenseStream, SynchData, DataPoint
 import math
+import copy
 
 class ZatConsorNode(Node):
      def __init__(
@@ -197,7 +201,6 @@ class ZatConsorNode(Node):
                timestamp = self.convert_time(key, False)
                self.get_logger().debug(f"timestamp key: {timestamp}")
                main_msg.header.stamp = timestamp
-               main_msg.sync_srate = self._no_seconds
 
                data = self.merged[key]
                for i in range(len(data)):
@@ -507,8 +510,8 @@ class ZatConsorNode(Node):
      
      def convert_time(self, timestamp, bool_to_s: bool =True):
           if bool_to_s:
-               seconds = timestamp.sec
-               nanosec = timestamp.nanosec * 1e-9
+               seconds = Decimal(timestamp.sec)
+               nanosec = Decimal(timestamp.nanosec) / Decimal(1000000000)
                time = seconds + nanosec
           else:
                time = Time()
@@ -586,8 +589,8 @@ class ZatConsorNode(Node):
                               self.merged[new_key].extend(temp_esense)
                self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
                self.get_logger().debug(f"merged: {self.merged}\n\n")
-               if self.temp == 3:
-                    self.get_logger().error("DONE!!!")
+               # if self.temp == 3:
+               #      self.get_logger().error("self.temp == 3")
 
           else:
                self.get_logger().error(f"CONDITION not SET: self.prev_data is None\ndict_msgs: {dict_msgs}")
@@ -600,7 +603,7 @@ class ZatConsorNode(Node):
                          if temp_dict[j]['id'] == self.prev_data[sensor_name][i]['id']:
                               for k,v in temp_dict[j].items():
                                    self.prev_data[sensor_name][i][k] = v
-          new_temp = self.prev_data[sensor_name]
+          new_temp = copy.deepcopy(self.prev_data[sensor_name])
           return new_temp
 
      def initialise_prev_data(self, sensor_name, list_dict_sensor_values:list=[]):
