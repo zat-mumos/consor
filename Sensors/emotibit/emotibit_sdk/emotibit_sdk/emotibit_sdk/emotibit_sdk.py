@@ -1,3 +1,4 @@
+import logging
 import rclpy
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
@@ -12,7 +13,6 @@ import numpy as np
 
 import time
 
-
 class SensorDataEmotibitWithSdk(Node):
     def __init__(self,
                  batch_time: float = 1e-5, # the frequency at which the data should be collected
@@ -22,10 +22,25 @@ class SensorDataEmotibitWithSdk(Node):
                  ):
         super().__init__('sensor_data_emotibit_with_sdk')
 
-        # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
+        # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to print debug statements within the code.
 
         self.i = 0 # counter
-        
+
+        self.t0_n_samples = {
+            'def': {
+                "Accelerometer": {'t0': None, 'n_samples': 0, 'n': []},
+                "Gyroscope": {'t0': None, 'n_samples': 0, 'n': []},
+                "Magnetometer": {'t0': None, 'n_samples': 0, 'n': []},
+                },
+            'aux': {
+                "PPG": {'t0': None, 'n_samples': 0, 'n': []}
+                },
+            'anc': {
+                "EDA": {'t0': None, 'n_samples': 0, 'n': []},
+                "Temperature": {'t0': None, 'n_samples': 0, 'n': []}
+                }
+            }
+
         # Declare parameters
         self.declare_parameter('topic_names', sensor_topic)
         self.declare_parameter('stream_names', type_stream)
@@ -126,7 +141,16 @@ class SensorDataEmotibitWithSdk(Node):
                 timestamp_channel_aux = board_descr_aux['timestamp_channel']
                 timestamp_channel_anc = board_descr_anc['timestamp_channel']
 
-                self.get_logger().debug(f"Timestamp Channel: \nDefault {timestamp_channel_def}\nAuxiliary {timestamp_channel_aux}\nAncillary {timestamp_channel_anc}")
+                srate_def = board_descr_def['sampling_rate']
+                srate_aux = board_descr_aux['sampling_rate']
+                srate_anc = board_descr_anc['sampling_rate']
+
+                self.t0_n_samples['def']['srate'] = srate_def
+                self.t0_n_samples['aux']['srate'] = srate_aux
+                self.t0_n_samples['anc']['srate'] = srate_anc
+
+                # self.get_logger().debug(f"Sampling rate: \nDefault {srate_def}\nAuxiliary {srate_aux}\nAncillary {srate_anc}")
+                # self.get_logger().debug(f"Timestamp Channel: \nDefault {timestamp_channel_def}\nAuxiliary {timestamp_channel_aux}\nAncillary {timestamp_channel_anc}")
 
                 # for each stream, publish data
                 for stream in self.stream_type:
@@ -135,6 +159,7 @@ class SensorDataEmotibitWithSdk(Node):
                     channels = []
                     if stream in ["Accelerometer", "Gyroscope", "Magnetometer"]: # DEFAULT PRESET
                         timestamp = data_def_to_publish.iloc[:, timestamp_channel_def].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        var_preset = 'def'
                         if stream == 'Accelerometer':
                             channels = board_descr_def['accel_channels']
                         elif stream == 'Gyroscope':
@@ -145,11 +170,13 @@ class SensorDataEmotibitWithSdk(Node):
 
                     elif stream in ['PPG']: #AUXILIARY PRESET
                         timestamp = data_aux_to_publish.iloc[:, timestamp_channel_aux].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        var_preset = 'aux'
                         channels = board_descr_aux['ppg_channels']
                         sensor_data = data_aux_to_publish.iloc[:, channels]
 
                     elif stream in ["EDA", "Temperature"]: # ANCILLARY PRESET
                         timestamp = data_anc_to_publish.iloc[:, timestamp_channel_anc].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
+                        var_preset = 'anc'
                         if stream == 'EDA':
                             channels = board_descr_anc['eda_channels']
                         elif stream == 'Temperature':
@@ -158,6 +185,26 @@ class SensorDataEmotibitWithSdk(Node):
                     else:
                         self.get_logger().info(f"Current stream ({stream}) does not belong to any preset\nContinuing ...")
                         continue
+                    
+                    if self.t0_n_samples[var_preset][stream]['t0'] == None:
+                        self.t0_n_samples[var_preset][stream]['t0'] = timestamp[0]
+                    n_samples = sensor_data.shape[0]
+                    self.get_logger().debug(f"stream: {stream}\tsensor_data(shape): {sensor_data.shape}\tn_samples: {n_samples}\nself.t0_n_samples: {self.t0_n_samples}\n")
+                    self.get_logger().debug(f"Original timestamps:\t{timestamp}")
+                    timestamp = []
+                    for i in range(n_samples):
+                        new_ts = self.t0_n_samples[var_preset][stream]['t0'] + (self.t0_n_samples[var_preset][stream]['n_samples'] + i)/ self.t0_n_samples[var_preset]['srate']
+                        self.get_logger().debug(f"self.t0_n_samples[{var_preset}][{stream}]['t0']: {self.t0_n_samples[var_preset][stream]['t0']}\n"
+                                      f"self.t0_n_samples[{var_preset}][stream]['n_samples']: {self.t0_n_samples[var_preset][stream]['n_samples']}\n"
+                                      f"i: {i}\n"
+                                      f"self.t0_n_samples[{var_preset}]['srate']: {self.t0_n_samples[var_preset]['srate']}\n"
+                                      f"(self.t0_n_samples[var_preset][stream]['n_samples'] + i): {(self.t0_n_samples[var_preset][stream]['n_samples'] + i)}\n"
+                                      f"(self.t0_n_samples[var_preset][stream]['n_samples'] + i)/ self.t0_n_samples[var_preset]['srate']: {(self.t0_n_samples[var_preset][stream]['n_samples'] + i)/ self.t0_n_samples[var_preset]['srate']}\n"
+                                      f"new_ts = t0 + above: {new_ts}\n\n")
+                        timestamp.append(new_ts)
+                    self.get_logger().debug(f"New timestamps:\t{timestamp}")
+                    self.t0_n_samples[var_preset][stream]['n_samples'] += n_samples
+                    self.t0_n_samples[var_preset][stream]['n'].append(n_samples)
 
                     main_msg = EmotibitMsg()
                     main_msg.timestamp = [self.convert_time(t) for t in timestamp]
@@ -186,6 +233,7 @@ class SensorDataEmotibitWithSdk(Node):
                     self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
         except KeyboardInterrupt:
             self.get_logger().debug('Session in keyboard interrupt')
+            self.get_logger().debug(f"self.t0_n_samples: {self.t0_n_samples}")
             board.stop_stream()
             self.get_logger().debug('Session stopped')
             board.release_session()
