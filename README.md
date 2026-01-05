@@ -23,6 +23,8 @@ Sensors currently supported by this repository have a separate folder and can be
 3. EmotiBit
 4. OpenBCI
 
+To synchronise the sensors and publish it as a single ros2 message a Ros2 node can be found in the `zat_consor_synch` folder
+
 
 ##### Repository branches
 
@@ -38,6 +40,9 @@ The installation and usage details are dependent on the sensors and can be found
 2. [Movella README](Sensors/movella_xSens_dot)
 3. [EmotiBit README](Sensors/emotibit)
 4. [OpenBCI README](Sensors/openbci)
+
+For installing and running the synchronisation node follow the steps in the README file in folder `zat_consor_synch` or using this link
+1. [zat_consor_synch](zat_consor_sync)
 
 
 <!-- This section is more like common steps to follow, we can add it later with detail steps once we have more clarity on how sensors will be configured and so on
