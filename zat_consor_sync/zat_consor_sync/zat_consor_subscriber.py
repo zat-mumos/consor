@@ -553,7 +553,7 @@ class ZatConsorNode(Node):
                     while not bool_upd_prev_data:
                          if self.prev_timestamp is None: # i.e., first iteration
                               self.prev_timestamp = key
-                              self.next_timestamp = self.prev_timestamp + self.sync_period
+                              self.next_timestamp = Decimal(str(self.prev_timestamp)) + Decimal(str(self.sync_period))
                               bool_upd_prev_data = True
                               self.get_logger().debug(f"0. {self.prev_timestamp}\t{self.next_timestamp}\tkey:{key}\tsync_period:{self.sync_period}")
                          else: # at this point, self.prev_timestamp & self.next_timestamp is not None & self.prev_data is updated from prev.iteration
@@ -563,20 +563,19 @@ class ZatConsorNode(Node):
                                         self.next_timestamp = key + self.sync_period
                                         bool_upd_prev_data = True 
                                         self.get_logger().debug(f"1. {self.prev_timestamp}\t{self.next_timestamp}\tkey:{key}\tsync_period:{self.sync_period}")
-                                   elif key < self.prev_timestamp: 
+                                   elif key <= self.prev_timestamp:
                                         self.get_logger().debug(f"Continuing .....")
                                         break
                                    elif key != self.next_timestamp:
                                         self.temp +=1
                                         self.prev_timestamp = self.next_timestamp
-                                        self.next_timestamp = self.next_timestamp + self.sync_period
+                                        self.next_timestamp = Decimal(str(self.next_timestamp)) + Decimal(str(self.sync_period))
                                         bool_upd_prev_data = False # self.prev_data is not updated when key differs from self.next_timestamp - datapoints received at unequal intervals of time
                                         self.get_logger().debug(f"2. {self.prev_timestamp}\t{self.next_timestamp}\tkey:{key}\tsync_period:{self.sync_period}")
                          
                          self.next_timestamp = round(self.next_timestamp * self._no_seconds)/self._no_seconds # if sync_period is 0.1, adding this to timestamp does not increment exactly by 0.1 but sometimes as 0.999998
                          new_key = self.prev_timestamp # in case of missing timestamps
                          if key in movella_msg:
-                              self.get_logger().warn("MOVELLA")
                               temp_movella = self.flatten_nested_lists('movella', movella_msg[key], bool_upd_prev_data)
                               self.merged[new_key].extend(temp_movella)
 
