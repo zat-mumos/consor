@@ -16,7 +16,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='swathy',
+    maintainer='Swathy Cheruvalath',
     maintainer_email='swathy.cheruvalath@smail.inf.h-brs.de',
     description='This ROS2 package uses pylsl to publish EmotiBit data (requires EmotiBit Oscilloscope)',
     license='TODO: License declaration',

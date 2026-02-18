@@ -1,25 +1,52 @@
-import logging
+"""
+A ROS node that gets data from the EmotiBit sensor and publishes it to a ROS topic
+
+Subscribers:
+    None
+
+Publishers:
+    One publisher per stream or topic as mentioned in the YAML config file. 
+    For example, /emotibit/acc, /emotibit/gyro, /emotibit/mag, /emotibit/ppg, /emotibit/eda, /emotibit/temp 
+
+Parameters:
+    - topic_names (list, default: ["default_topic"])
+    - stream_names (list, default: ["default_stream"])
+    - callback_timer (float, default: 1e-5)
+    - emotibit_timer (float, default: 1e-5)
+
+Description:
+    This code connects to the sensor using BrainFlow SDK.
+    Depending on the streams, the preset (to know more about BrainFlow presets, visit http://brainflow.readthedocs.io/en/stable/DataFormatDesc.html#presets-label) is set and the sensor data is acquired. 
+    The data received from the sensor is then published to the respective ROS2 topic.
+
+Author: 
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
+
 import rclpy
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
-
 from zat_ros2_msgs.msg import EmotibitMsg, EmotibitData
 from builtin_interfaces.msg import Time
-
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds, BrainFlowPresets
-
 import pandas as pd
 import numpy as np
-
 import time
 
 class SensorDataEmotibitWithSdk(Node):
+    """
+    Acquire and publish sensor data from EmotiBit using BrainFlow SDK.
+    """
+
     def __init__(self,
                  batch_time: float = 1e-5, # the frequency at which the data should be collected
                  callback_timer: float = 1e-5, # timer for the callback function
-                 type_stream  = ["default_stream"],
-                 sensor_topic = ["deafault_topic"]
+                 type_stream: list  = ["default_stream"],
+                 sensor_topic: list = ["deafault_topic"]
                  ):
+        """
+        Initialise the SensorDataEmotibitWithSdk class.
+        """
         super().__init__('sensor_data_emotibit_with_sdk')
 
         # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to print debug statements within the code.
@@ -75,16 +102,17 @@ class SensorDataEmotibitWithSdk(Node):
         for stream, topic in zip(self.stream_type, self.topics):
             self.get_logger().debug(f'Creating publisher for EmotiBit sensor (Stream type: {stream} & Topic: {topic})')
             self.publisher[stream] = self.create_publisher(EmotibitMsg, topic, 10)
-
         
         self.timer_call = self.create_timer(self.callback_timer, self.timer_callback)
 
     def timer_callback(self):
+        """
+        A callback function which connects to the sensor, acquires data from it and then publishes this information to a ROS topic at regular intervals.
+        """
         try:
             self.get_logger().debug("In timer_callback")
             while rclpy.ok():
                 self.get_logger().debug("In timer_callback 2")
-
                 if self.i == 0:
                     params = BrainFlowInputParams()
                     # current_preset = BrainFlowPresets.DEFAULT_PRESET
@@ -113,9 +141,6 @@ class SensorDataEmotibitWithSdk(Node):
                 self.get_logger().debug(f"Data received")
                 board.stop_stream()
                 self.get_logger().debug(f"Streaming stopped")
-                # board.release_session()
-                # self.get_logger().debug(f"Session released")
-
 
                 board_descr_def = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.DEFAULT_PRESET)
                 board_descr_aux = BoardShim.get_board_descr(board_ids, preset=BrainFlowPresets.AUXILIARY_PRESET)
@@ -149,9 +174,6 @@ class SensorDataEmotibitWithSdk(Node):
                 self.t0_n_samples['aux']['srate'] = srate_aux
                 self.t0_n_samples['anc']['srate'] = srate_anc
 
-                # self.get_logger().debug(f"Sampling rate: \nDefault {srate_def}\nAuxiliary {srate_aux}\nAncillary {srate_anc}")
-                # self.get_logger().debug(f"Timestamp Channel: \nDefault {timestamp_channel_def}\nAuxiliary {timestamp_channel_aux}\nAncillary {timestamp_channel_anc}")
-
                 # for each stream, publish data
                 for stream in self.stream_type:
                     curr_publisher = self.publisher[stream]
@@ -167,13 +189,11 @@ class SensorDataEmotibitWithSdk(Node):
                         elif stream == 'Magnetometer':
                             channels = board_descr_def['magnetometer_channels']
                         sensor_data = data_def_to_publish.iloc[:, channels]
-
                     elif stream in ['PPG']: #AUXILIARY PRESET
                         timestamp = data_aux_to_publish.iloc[:, timestamp_channel_aux].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
                         var_preset = 'aux'
                         channels = board_descr_aux['ppg_channels']
                         sensor_data = data_aux_to_publish.iloc[:, channels]
-
                     elif stream in ["EDA", "Temperature"]: # ANCILLARY PRESET
                         timestamp = data_anc_to_publish.iloc[:, timestamp_channel_anc].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
                         var_preset = 'anc'
@@ -227,7 +247,6 @@ class SensorDataEmotibitWithSdk(Node):
                         msg.data = temp_data
                         self.get_logger().debug(f"\nCurrent Msg: {msg}\nTemp_msg_data: {temp_msg_data}\n")
                         temp_msg_data.append(msg) # One list per channel
-
                     main_msg.data = temp_msg_data
                     curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
                     self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
@@ -247,8 +266,16 @@ class SensorDataEmotibitWithSdk(Node):
             self.get_logger().debug('Session released & initiating rclpy shutdown')
             rclpy.shutdown()
 
+    def convert_time(self, timestamp: float):
+        """
+        Converts a float timestamp to seconds and nanoseconds.
 
-    def convert_time(self, timestamp):
+        Arguments:
+        float timestamp: timestamp in float
+
+        Returns:
+        builtin_interfaces.msg.Time : timestamp in seconds and nanoseconds
+        """
         time = Time()
         time.sec = int(timestamp)
         time.nanosec = int((timestamp%1)*1e9)
@@ -256,9 +283,11 @@ class SensorDataEmotibitWithSdk(Node):
 
 
 def main():
+    """
+    Run the SensorDataEmotibitWithSdk Node.
+    """
     rclpy.init()
     sensor_node=SensorDataEmotibitWithSdk()
-
     sensor_node.get_logger().debug("Node has been initialised")
     sensor_node.get_logger().debug(f"Node: {sensor_node}\nType: {type(rclpy.spin)}")
     try:

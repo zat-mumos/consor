@@ -10,7 +10,7 @@
 
 - WiFi connectivity ***(EmotiBit and the Linux System(s) must be connected to the same WiFi)***
 - [BrainFlow](https://brainflow.org/)
-- *zat_ros2_msgs*
+- [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs.git)
 
 #### Tested Environment
 
@@ -35,12 +35,26 @@
 
 #### Running the emotibit_pkg
 
-- `cd zat_ws`
-- `source /opt/ros/humble/setup.bash`
-- `colcon build`
-- `source install/setup.bash`
-- `ros2 launch emotibit_sdk launch.py`
-
+```
+# go to zat workspace
+cd zat_ws
+```
+```
+# source ROS
+source /opt/ros/humble/setup.bash
+```
+```
+# build the workspace
+colcon build
+```
+```
+# source the workspace
+source install/setup.bash
+```
+```
+# launch the package
+ros2 launch emotibit_sdk launch.py
+```
 
 ###### Notes
 

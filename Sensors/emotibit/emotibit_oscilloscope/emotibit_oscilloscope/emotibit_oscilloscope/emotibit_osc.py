@@ -1,19 +1,43 @@
-from ament_index_python.packages import get_package_share_directory
+"""
+A ROS2 node that gets data from the EmotiBit sensor and publishes it to a ROS2 topic
 
+Subscribers:
+    None
+
+Publishers:
+    One publisher per stream or topic as mentioned in the YAML config file. 
+    For example, /emotibit/gyro_x, /emotibit/gyro_y, /emotibit/gyro_z, /emotibit/eda etc. 
+
+Parameters:
+    - topic_names (list, default: ["default_topic"])
+    - stream_names (list, default: ["default_stream"])
+    - emotibit_timer (float, default: 1e-5)
+
+Description:
+    EmotiBit Oscilloscope sends data via LSL. Using threading, data from multiple streams are received and published to the respective ROS2 topic
+
+Author: 
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
+
+from ament_index_python.packages import get_package_share_directory
 import rclpy
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
-
 from zat_ros2_msgs.msg import EmotibitStream
 from builtin_interfaces.msg import Time
-
 from pylsl import resolve_byprop, StreamInlet
-
 from threading import Thread
 
-
 class SensorDataEmotibitWithOscilloscope(Node):
+    """
+    Acquire and publish data from the EmotiBit sensor.
+    """
+
     def __init__(self):
+        """
+        Initialise the SensorDataEmotibitWithOscilloscope class
+        """
         super().__init__('sensor_data_emotibit_with_oscilloscope')
 
         # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
@@ -53,8 +77,10 @@ class SensorDataEmotibitWithOscilloscope(Node):
         except Exception as e:
             self.get_logger().debug(f"Exception: {e}")
 
-
     def create_threads(self):
+        """
+        This function creates a separate thread for each stream. Each thread has its own ID.
+        """
         self.get_logger().debug(f"In Function: create_threads()")
         self.current_threads = [] # refresh list of current_threads
 
@@ -69,8 +95,14 @@ class SensorDataEmotibitWithOscilloscope(Node):
             k += 1
         self.get_logger().debug(f"{len(self.current_threads)} threads created & appended")
 
-    
-    def get_sensor_data(self, stream_type, id):
+    def get_sensor_data(self, stream_type: str, id: int):
+        """
+        This function receives sensor data from the oscilloscope and publishes it to a ROS2 topic.
+
+        Arguments:
+        str stream_type: The stream for which the data has to be acquired from the oscilloscope
+        int id: The ID for the thread for the respective 'stream_type'
+        """
         try:
             curr_stream_pub = self.publisher[stream_type]
             self.get_logger().debug(f"Current publisher for stream type: {curr_stream_pub} | {stream_type}")
@@ -101,9 +133,17 @@ class SensorDataEmotibitWithOscilloscope(Node):
             self.get_logger().error(f"Error (Thread {id}): {e}")      
         except KeyboardInterrupt:
             rclpy.shutdown()
-            
 
-    def convert_time(self, timestamp):
+    def convert_time(self, timestamp: float):
+        """
+        This function converts a float timestamp to seconds and nanoseconds.
+
+        Arguments:
+        float timestamp: timestamp in float
+
+        Returns:
+        builtin_interfaces.msg.Time : Timestamp in seconds and nanoseconds 
+        """
         time = Time()
         time.sec = int(timestamp)
         time.nanosec = int((timestamp%1)*1e9)
@@ -111,6 +151,9 @@ class SensorDataEmotibitWithOscilloscope(Node):
 
 
 def main():
+    """
+    Run the SensorDataEmotibitWithOscilloscope Node.
+    """
     rclpy.init()
     sensor_node=SensorDataEmotibitWithOscilloscope()
 

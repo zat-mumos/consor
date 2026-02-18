@@ -3,7 +3,7 @@
 <package format="3">
   <name>emotibit_oscilloscope</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>This ROS2 package uses pylsl to publish EmotiBit data (requires EmotiBit Oscilloscope)</description>
   <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">swathy</maintainer>
   <license>TODO: License declaration</license>
 

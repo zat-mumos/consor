@@ -39,7 +39,7 @@ In this setup, there are two linux systems (Device A and Device B) where Device 
 - [pylsl](https://github.com/labstreaminglayer/pylsl)
 - [liblsl](https://github.com/sccn/liblsl)
 - Either conda environment (for installation of liblsl) or the source code (.deb) for liblsl from the [release](https://github.com/sccn/liblsl/releases) page.
-- *zat_ros2_msgs*
+- [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs.git)
 
 #### Tested Environment
 

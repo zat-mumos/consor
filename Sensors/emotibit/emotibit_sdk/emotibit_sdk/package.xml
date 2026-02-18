@@ -3,7 +3,7 @@
 <package format="3">
   <name>emotibit_sdk</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>This ROS2 package uses BrainFlow SDK to publish the EmotiBit data</description>
   <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">swathy</maintainer>
   <license>TODO: License declaration</license>
 
