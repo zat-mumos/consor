@@ -13,9 +13,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Oviya Rajavel',
-    maintainer_email='oviyarajavel@gmail.com',
-    description='TODO: Package description',
+    maintainer='Oviya Rajavel, Swathy Cheruvalath',
+    maintainer_email='oviya.rajavel@smail.inf.h-brs.de, swathy.cheruvalath@smail.inf.h-brs.de',
+    description='A ROS2 package for synchronising and publishing multiple consor wearable sensors.',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={

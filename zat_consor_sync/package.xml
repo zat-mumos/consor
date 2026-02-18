@@ -3,8 +3,9 @@
 <package format="3">
   <name>zat_consor_sync</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="oviyarajavel@gmail.com">oviya</maintainer>
+  <description>A ROS2 package for synchronising and publishing multiple consor wearable sensors.</description>
+  <maintainer email="oviya.rajavel@smail.inf.h-brs.de">Oviya Rajavel</maintainer>
+  <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">Swathy Cheruvalath</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>

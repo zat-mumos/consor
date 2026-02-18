@@ -1,7 +1,50 @@
 #!/usr/bin/env python3
+
+"""
+Combine, sync and publish data to ROS2 topic
+
+Subscribers:
+     /sensor/movella/imu_data: Subscriber for Movella sensor topic
+     /sensor/esense/data: Subscriber for eSense sensor topic
+     /emotibit/acc: Subscriber for EmotiBit - Acclerometer topic
+     /emotibit/gyro: Subscriber for EmotiBit - Gyroscope topic
+     /emotibit/mag: Subscriber for EmotiBit - Magnetometer topic
+     /emotibit/ppg: Subscriber for EmotiBit - PPG topic
+     /emotibit/eda: Subscriber for EmotiBit - EDA topic
+     /emotibit/temp: Subscriber for EmotiBit - Temperature topic
+
+Publishers:
+     sensor/emotibit/data: Publishes data from all EmotiBit channels (Accelerometer, Gyroscope, Magnetometer, PPG, EDA, Temperature)
+     sensor/consor/wearable/data: Publishes batched data from all available sensors
+     sensor/synched/data: Publishes synched data
+
+Parameters:
+     sync_period (float, default: 0.001)
+     movella_topic (str, default: /sensor/movella/imu_data)
+     esense_topic (str, default: /sensor/esense/data)
+     emotibit_accelerometer_topic (str, default: /emotibit/acc)
+     emotibit_gyroscope_topic (str, default: /emotibit/gyro)
+     emotibit_magnetometer_topic (str, default: /emotibit/mag)
+     emotibit_ppg_topic (str, default: /emotibit/ppg)
+     emotibit_eda_topic (str, default: /emotibit/eda)
+     emotibit_temperature_topic (str, default: /emotibit/temp)
+     emotibit_synch_topic (str, default: sensor/emotibit/data)
+     sync_topic (str, default: sensor/synched/data)
+
+Description:
+     This code subscribes to all available sensors.  If EmotiBit sensor is present, then it gets data from each emotibit topic and publishes 
+     all channels/modalities into a single topic.  This code batches data from all available sensors and publishes them to another topic.  It 
+     synches data from all available sensors based on their timestamps and publishes them to a separate topic.
+
+Author:
+     Oviya Rajavel <oviya.rajavel@smail.inf.h-brs.de>
+     Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
+
 from collections import defaultdict, deque
 from decimal import Decimal
 import threading
+from typing import Union
 
 import rclpy
 from rclpy.node import Node
@@ -15,6 +58,9 @@ import math
 import copy
 
 class ZatConsorNode(Node):
+     """
+     Subscribe and publish sensor data.
+     """
      def __init__(
           self,
           sync_period: float = 0.001,
@@ -29,8 +75,7 @@ class ZatConsorNode(Node):
           emotibit_synch_topic: str = 'sensor/emotibit/data',
           consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data',
           sync_topic: str = 'sensor/synched/data'):
-
-
+          """initialise ZatConsorNode class"""
           super().__init__('zat_consor_node')
 
 
@@ -240,41 +285,46 @@ class ZatConsorNode(Node):
                     f" and old data for the rest"
                )
 
-
-     def _movella_callback(self,msg): 
+     def _movella_callback(self,msg: MovellaData): 
+          """
+          A callback function for Movella sensors that is executed whenever a new Movella msg is received.
+          
+          Arguments:
+          MovellaData msg: The message received from /sensor/movella/imu_data topic.
+          """
           self._movella_data = msg
           self._flatten_movella_data(self._movella_data) # flatten movella data
           self.get_logger().info("Movella data received")
 
-     def _flatten_movella_data(self, msg):
+     def _flatten_movella_data(self, msg: MovellaData):
+          """
+          Flatten msgs for Movella sensor.
+
+          Arguments:
+          MovellaData msg: The message received from /sensor/movella/imu_data
+          """
           self.movella_data = defaultdict(list)
           self.get_logger().debug("flatten msgs")
-
           sensor_name = 'movella'
           for movella_sensor in msg.data: # msg - MovellaData .data
                for data in movella_sensor.data: # msg - MovellaSensor .data  => gives access to fields in MovellaImu
                     temp_dict = {}
                     temp_dict['id'] = movella_sensor.id  # msg - MovellaSensor .id
                     temp_dict['name'] = sensor_name
-
                     ts = data.header.stamp # header of MovellaImu
                     ts_ = self.convert_time(ts) # convert builtin-interfaces.Time to (double) timestamp 
 
                     # convert timestamp to required precision
                     ts_ = round(ts_ * self._no_seconds) / self._no_seconds
-
                     if ts_ not in self.movella_data:
                          self.movella_data[ts_] = []
-
                     for fields in data.__slots__: # iterate through each field to get their names & values
                          if fields not in ('_header'): # except header, add all other fields & their values to temp_dict
                               field_name = fields.strip('_')
                               field_value = getattr(data, fields)
                               temp_dict[field_name] = field_value
                               self.get_logger().debug(f"fields: {fields.strip('_')}, {getattr(data, fields)}")
-                    
                     self.get_logger().debug(f"temp_dict: {temp_dict}")
-                    
                     if temp_dict not in self.movella_data[ts_]:
                          id_found = False
                          temp_index = 0
@@ -292,39 +342,42 @@ class ZatConsorNode(Node):
                     self.initialise_prev_data(sensor_name, self.movella_data[ts_])
                self.movella_data = dict(sorted(self.movella_data.items()))
 
-
-     def _esense_callback(self,msg):
+     def _esense_callback(self,msg: EsenseStream):
+          """
+          A callback function for eSense sensors that is executed whenever a new msg from eSense is received.
+          
+          Arguments:
+          EsenseStream msg: The message received from /sensor/esense/data topic.
+          """
           self._esense_data = msg
           self._flatten_esense_data(msg)
           self.get_logger().info("eSense data received")
      
-     def _flatten_esense_data(self, msg):
+     def _flatten_esense_data(self, msg: EsenseStream):
+          """
+          Flatten msgs for eSense sensor.
+
+          Arguments:
+          EsenseStream msg: The message received from /sensor/esense/data
+          """
           self.esense_data = defaultdict(list)
           self.get_logger().debug('esense flatten msgs')
-
           sensor_name = 'esense'
           for data in msg.data:
                temp_dict = {}
-                    
                ts = data.header.stamp
                ts_ = self.convert_time(ts)
-
-               # convert timestamp to required precision
-               ts_ = round(ts_ * self._no_seconds) / self._no_seconds
-               
+               ts_ = round(ts_ * self._no_seconds) / self._no_seconds # convert timestamp to required precision
                if ts_ not in self.esense_data:
                     self.esense_data[ts_] = []
-
                for fields in msg.__slots__:
                     if fields in ('id'):
                          id_ = msg.id
                          break
                     else:
                          id_ = 0
-               
                temp_dict['id'] = id_
                temp_dict['name'] = sensor_name
-
                field = msg.sensor_type
                if field == 'temperature':
                     field_name = 'temp'
@@ -340,9 +393,7 @@ class ZatConsorNode(Node):
                     field_name = 'respSim'
                else:
                     field_name = 'none'
-
                temp_dict[field_name] = data.sample_data
-
                self.get_logger().debug(f"each data: {data}")
                if temp_dict not in self.esense_data[ts_]:
                     id_found = False
@@ -362,42 +413,80 @@ class ZatConsorNode(Node):
           self.esense_data = dict(sorted(self.esense_data.items()))
           self.get_logger().debug(f"{self.esense_data}\n")
 
-
      # Since each modality in emotibit has its own ros2 topic, when new msgs are received emotibit_sync() is called
-     def _emotibit_accelerometer_callback(self, msg):
+     def _emotibit_accelerometer_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from Accelerometer's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/acc topic.
+          """
           data = msg
           stream = "accelerometer"
           self._emotibit_synch(data,stream)
 
-     def _emotibit_gyroscope_callback(self, msg):
+     def _emotibit_gyroscope_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from Gyroscope's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/gyro topic.
+          """
           data = msg
           stream = "gyroscope"
           self._emotibit_synch(data,stream)
 
-     def _emotibit_magnetometer_callback(self, msg):
+     def _emotibit_magnetometer_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from Magnetometer's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/mag topic.
+          """
           data = msg
           stream = "magnetometer"
           self._emotibit_synch(data,stream)
 
-     def _emotibit_ppg_callback(self, msg):
+     def _emotibit_ppg_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from PPG's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/ppg topic.
+          """
           data = msg
           stream = "ppg"
           self._emotibit_synch(data,stream)  
 
-     def _emotibit_eda_callback(self, msg):
+     def _emotibit_eda_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from EDA's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/eda topic.
+          """
           data = msg
           stream = "eda"
           self._emotibit_synch(data,stream) 
 
-     def _emotibit_temperature_callback(self, msg):
+     def _emotibit_temperature_callback(self, msg: EmotibitMsg):
+          """
+          A callback function for EmotiBit sensors that is executed whenever a new msg from Temperature's topic is received.
+          
+          Arguments:
+          EmotibitMsg msg: The message received from /emotibit/temp topic.
+          """
           data = msg
           stream = "temperature"
           self._emotibit_synch(data,stream)      
      
-
-     def _emotibit_synch(self, data, stream):
+     def _emotibit_synch(self, data: EmotibitMsg, stream: str):
           """
-          This function combines data from all modalities from emotibit that is published as separate topics into a single msg
+          This function combines data from all modalities from emotibit that is published as separate topics into a single msg.
+
+          Arguments:
+          EmotibitMsg data: The message received from one of the Emotibit sensor modalities
+          str stream: The name of the modality for which the message is received
           """
           self.synched_flattened_emotibit_data = defaultdict(list)
 
@@ -413,17 +502,20 @@ class ZatConsorNode(Node):
           if all(temp_var):
                self.get_logger().debug(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
                self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
-
                # Flatten the msg once all modalities are received
                self.synched_flattened_emotibit_data = self._emotibit_flatten_msgs(self._emotibit_synch_data)
                self.get_logger().info("Emotibit data received")
 
-     def _emotibit_flatten_msgs(self, msg_):
+     def _emotibit_flatten_msgs(self, msg_: EmotibitSynchData):
           """
           Since each message is a nested batched msg, they should be flattened to get the timestamp for each sample.
-          """
 
-          # _msg: EmotibitSynchData.msg
+          Arguments:
+          EmotibitSynchData msg_: Combined message from all modalities of the Emotibit sensor
+
+          Returns:
+          dict flat_emotibit_data: A dictionary of flattened msgs
+          """
           emotibit_data = defaultdict(list)
           for stream in self._emotibit_streams:
                if stream == 'accelerometer':
@@ -444,43 +536,42 @@ class ZatConsorNode(Node):
                elif stream == 'temperature':
                     msg = msg_.temperature[0]
                     s = 'temp'
-               
                self.get_logger().debug(f"msg_: {msg_}")
                flattened_data = self._emotibit_flatten_helper_msg(msg, s, emotibit_data)
                flat_emotibit_data = dict(sorted(flattened_data.items()))
           self.get_logger().debug(f"{flat_emotibit_data.keys()}\n{flat_emotibit_data}\n\n")
           return flat_emotibit_data
 
-     def _emotibit_flatten_helper_msg(self, msg, s, emotibit_data):
+     def _emotibit_flatten_helper_msg(self, msg: EmotibitMsg, s: str, emotibit_data: dict):
           """
-          A helper function to flatten msgs from individual streams but also combine it with previously received msgs in case they have the same timestamp
-          """
+          A helper function to flatten msgs from individual streams but also combine it with previously received msgs in case they have the same timestamp.
 
+          Arguments:
+          EmotibitMsg msg: A message from one of the modalities from EmotiBit sensors
+          str s: The stream or modality from which the message is received
+          dict emotibit_data: A dictionary of previously received flattened EmotiBit msgs
+
+          Returns:
+          dict emotibit_data: A dictionary with flattened msgs from individual streams combined with previously received msgs
+          """
           sensor_name = 'emotibit'
           for index, timestamp in enumerate(msg.timestamp): # msg - EmotibitMsg.msg
                temp_dict = {}
-                    
                ts = timestamp
                ts_ = self.convert_time(ts)
-
-               # convert timestamp to required precision
-               ts_ = round(ts_ * self._no_seconds) / self._no_seconds
-
+               ts_ = round(ts_ * self._no_seconds) / self._no_seconds # convert timestamp to required precision
                if ts_ not in emotibit_data:
                     emotibit_data[ts_] = []
-
                for fields in msg.__slots__:
                     if fields in ('id'):
                          id_ = msg.id
                          break
                     else:
                          id_ = 0 # in case of only a single sensor is present
-
                # if 'id' not in emotibit_data[ts_]:
                temp_dict['id'] = id_
                temp_dict['name'] = sensor_name
                self.get_logger().debug(f"emotibit_data: {emotibit_data}, temp_dict: {temp_dict}")
-
                # i iterates through each channel
                for i in range(len(msg.data)): # msg.data -> gives access to EmotibitData.msg
                     # Each channel has an EmotibitData.msg, hence if len(msg.data) is more than 1 then a suffix for channel no is added.
@@ -502,13 +593,22 @@ class ZatConsorNode(Node):
                          emotibit_data[ts_][temp_index].update(temp_dict)
                     else: 
                          emotibit_data[ts_].append(temp_dict)
-
           if id_ not in self.count_keys[sensor_name]['curr_keys']: self.count_keys[sensor_name]['curr_keys'][id_] = 0
           if id_ not in self.list_ids[sensor_name]: self.list_ids[sensor_name].append(id_)
           self.initialise_prev_data(sensor_name, emotibit_data[ts_])
           return emotibit_data
      
-     def convert_time(self, timestamp, bool_to_s: bool =True):
+     def convert_time(self, timestamp: Union[Time, float], bool_to_s: bool =True):
+          """
+          Convert timestamp from float to builtin_interfaces.Time or builtin_interfaces.Time to Decimal datatype.
+
+          Arguments:
+          Union[Time, float] timestamp: The timestamp is received as either float or builtin_interfaces.Time
+          bool bool_to_s: True if convert Time to Decimal and False if to convert float to Time
+
+          Returns:
+          Union[Decimal, Time] time: The timestamp as either builtin_interfaces.Time or Decimal datatype
+          """
           if bool_to_s:
                seconds = Decimal(timestamp.sec)
                nanosec = Decimal(timestamp.nanosec) / Decimal(1000000000)
@@ -525,15 +625,16 @@ class ZatConsorNode(Node):
                     except:
                          i = i - 1
                self.get_logger().debug(f"Timestamp: {timestamp} ; nanos: {time.nanosec}")
-
           return time
      
-     def merge_data(self, dict_msgs:dict):
+     def merge_data(self, dict_msgs: dict):
           """
-          A function to merge data from multiple sensors into a single variable, synched w.r.t. the sample's timestamps
+          A function to merge data from multiple sensors into a single variable, synched as per the sample's timestamps.
+
+          Arguments:
+          dict dict_msgs: A dictionary of msgs from multiple (available) sensors
           """
           self.merged = defaultdict(list)
-
           # Separate the msgs to different variables
           if "movella" in dict_msgs:
                movella_msg = dict_msgs["movella"]
@@ -541,12 +642,10 @@ class ZatConsorNode(Node):
                emotibit_msg = dict_msgs["emotibit"]
           if "esense" in dict_msgs:
                esense_msg = dict_msgs["esense"]
-          
           # check if each msg variables are defined else define them as empty to avoid variable errors in the further code
           movella_msg = movella_msg if 'movella_msg' in locals() else {}
           emotibit_msg = emotibit_msg if 'emotibit_msg' in locals() else {}
           esense_msg = esense_msg if 'esense_msg' in locals() else {}
-
           if self.prev_data is not None:
                for key in sorted(movella_msg.keys() | emotibit_msg.keys() | esense_msg.keys()): # combines unique keys from both msgs (keys here are the timestamps in decimals) & sorts them in ascending order
                     bool_upd_prev_data = False
@@ -572,29 +671,34 @@ class ZatConsorNode(Node):
                                         self.next_timestamp = Decimal(str(self.next_timestamp)) + Decimal(str(self.sync_period))
                                         bool_upd_prev_data = False # self.prev_data is not updated when key differs from self.next_timestamp - datapoints received at unequal intervals of time
                                         self.get_logger().debug(f"2. {self.prev_timestamp}\t{self.next_timestamp}\tkey:{key}\tsync_period:{self.sync_period}")
-                         
                          self.next_timestamp = round(self.next_timestamp * self._no_seconds)/self._no_seconds # if sync_period is 0.1, adding this to timestamp does not increment exactly by 0.1 but sometimes as 0.999998
                          new_key = self.prev_timestamp # in case of missing timestamps
                          if key in movella_msg:
                               temp_movella = self.flatten_nested_lists('movella', movella_msg[key], bool_upd_prev_data)
                               self.merged[new_key].extend(temp_movella)
-
                          if key in emotibit_msg:
                               temp_emotibit = self.flatten_nested_lists('emotibit', emotibit_msg[key], bool_upd_prev_data)
                               self.merged[new_key].extend(temp_emotibit)
-
                          if key in esense_msg:
                               temp_esense = self.flatten_nested_lists('esense', esense_msg[key], bool_upd_prev_data)
                               self.merged[new_key].extend(temp_esense)
                self.merged = dict(sorted(self.merged.items())) # sort the items by keys so that we get them in ascending order of timestamps
                self.get_logger().debug(f"merged: {self.merged}\n\n")
-               # if self.temp == 3:
-               #      self.get_logger().error("self.temp == 3")
-
           else:
                self.get_logger().error(f"CONDITION not SET: self.prev_data is None\ndict_msgs: {dict_msgs}")
 
-     def flatten_nested_lists(self, sensor_name, temp_dict, bool_upd_prev_data:bool=False):
+     def flatten_nested_lists(self, sensor_name: str, temp_dict: list, bool_upd_prev_data:bool=False):
+          """
+          Flatten nested lists.
+
+          Arguments:
+          str sensor_name: Name of the sensor
+          list temp_dict: List of dictionaries with data for the sensor specified by variable 'sensor_name'
+          bool bool_upd_prev_data: If True then update previous value for the sensor
+
+          Returns:
+          list new_temp: List of flattened values
+          """
           if bool_upd_prev_data:
                for j in range(len(temp_dict)): # for multiple ids
                     # assuming all ids are already added to self.prev_data
@@ -605,16 +709,21 @@ class ZatConsorNode(Node):
           new_temp = copy.deepcopy(self.prev_data[sensor_name])
           return new_temp
 
-     def initialise_prev_data(self, sensor_name, list_dict_sensor_values:list=[]):
+     def initialise_prev_data(self, sensor_name: str, list_dict_sensor_values: list = []):
+          """
+          Initialise previous data for each sensor.  If no data is received, the msg variables for the sensor are initialised to zero.
+
+          Arguments:
+          str sensor_name: Name of the sensor
+          list list_dict_sensor_values: A list of dictionaries with sensor values
+          """
           if self.prev_data is None:
                self.prev_data = {}
           if sensor_name not in self.prev_data.keys():
                self.prev_data[sensor_name] = [] # list for data from multiple ids
-          
           if self.prev_data[sensor_name] == []:
                for j in range(len(list_dict_sensor_values)):
                     self.helper_init_prev_data(sensor_name,0,j,list_dict_sensor_values,False)
-
           elif self.prev_data[sensor_name] != [] and len(list_dict_sensor_values) > 0:
                for j in range(len(list_dict_sensor_values)): # for each id 
                     bool_id_found = False
@@ -628,8 +737,17 @@ class ZatConsorNode(Node):
                     if bool_id_found == False: # new id found which is not a part of self.prev_data
                          self.helper_init_prev_data(sensor_name, 0, j, list_dict_sensor_values, bool_id_found)
 
+     def helper_init_prev_data(self, sensor_name: str, i: int = 0, j: int = 0, list_dict_sensor_values: list = [], bool_data_init: bool = False):
+          """
+          A helper function to initialise previous data.
 
-     def helper_init_prev_data(self, sensor_name:str, i:int=0, j:int=0, list_dict_sensor_values:list=[], bool_data_init:bool=False):
+          Arguments:
+          str sensor_name: Name of the sensor
+          int i: index in variable 'self.prev_data'
+          int j: index in variable 'list_dict_sensor_values'
+          list list_dict_sensor_values: list of dictionaries of sensor values
+          bool bool_data_init: If True then update existing sensor key in variable 'self.prev_data' and if False, then add a new dictionary to the sensor key and then update variable self.prev_data 
+          """
           curr_id = list_dict_sensor_values[j]['id']
           if self.count_keys[sensor_name]['curr_keys'][curr_id] < self.count_keys[sensor_name]['total_keys']:
                if bool_data_init:
@@ -651,10 +769,11 @@ class ZatConsorNode(Node):
                                    self.prev_data[sensor_name][len_prev_data][k] = 0.0
                               self.count_keys[sensor_name]['curr_keys'][curr_id] += 1
 
-                              
-     
                
 def main():
+     """
+     Run the ZatConsorNode Node.
+     """
      rclpy.init(args= None)
      consor =  ZatConsorNode(
           movella_topic = '/sensor/movella/imu_data',
@@ -668,9 +787,9 @@ def main():
           emotibit_synch_topic = 'sensor/emotibit/data',
           consor_wearable_sensor_topic = 'sensor/consor/wearable/data')
      rclpy.spin(consor)
-
      consor.destroy_node()
      rclpy.shutdown()
-     
+
+
 if __name__ == '__main__':
      main()

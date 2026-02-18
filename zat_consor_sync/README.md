@@ -1,6 +1,8 @@
 # Zat Consor Sync
 
-A ROS 2 package for synchronizing multiple **Consor wearable sensors** and publishing their data as a unified ROS message: `ZatConsorSynch.msg`.
+A ROS 2 package for synchronizing multiple **Consor wearable sensors**.  The data from multiple sensors are:
+- batched together and published as a unified ROS message: `ZatConsorSynch.msg`. 
+- synchronised and published as a unified ROS message: `SyncData.msg`
 
 Currently supported sensors:
 1. **eSense**  
