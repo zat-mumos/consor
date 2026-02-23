@@ -3,8 +3,8 @@
 <package format="3">
   <name>esense_pkg</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">swathy</maintainer>
+  <description>A ROS2 node that gets data from the Esense sensor and publishes it to a ROS topic using Lab Streaming Layer (LSL).</description>
+  <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">Swathy Cheruvalath</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>

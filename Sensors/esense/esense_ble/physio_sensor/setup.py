@@ -18,9 +18,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='swathy',
+    maintainer='Swathy Cheruvalath',
     maintainer_email='swathy.cheruvalath@smail.inf.h-brs.de',
-    description='TODO: Package description',
+    description='A ROS node that gets data from Esense sensors and publishes the acquired data to a ROS topic using Bluetooth.',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={

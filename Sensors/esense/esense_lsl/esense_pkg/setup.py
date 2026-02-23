@@ -15,9 +15,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='swathy',
+    maintainer='Swathy Cheruvalath',
     maintainer_email='swathy.cheruvalath@smail.inf.h-brs.de',
-    description='TODO: Package description',
+    description='A ROS2 node that gets data from the Esense sensor and publishes it to a ROS topic using Lab Streaming Layer (LSL).',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={

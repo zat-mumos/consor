@@ -14,7 +14,6 @@
 
 
 #### esense_ble folder contents
-
 - docs: Includes documentation about the ROS2 package and bluetoothctl bash scripts
 - physio_sensor: ROS2 package for eSense when data is transferred via BLE (Bluetooth Low Energy).
 
@@ -22,17 +21,16 @@
 # physio_sensor Package
 
 ### Requirements/Dependencies
-
-- *zat_ros2_msgs*
-- *empty* should be installed on the system. (Refer below to section Installation: 'empty' package for steps to install this package.)
+- [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs)
+- [empty](https://sourceforge.net/projects/empty/) should be installed on the system.  (Refer below to section Installation: 'empty' package for steps to install this package.)
 - Bluetooth must be functioning and switched on (on the system and the Android device)
 
 ### Tested environment 
-
 - Ubuntu 20.04, 22.04
 - ROS2 (foxy, humble)
 - Python 3.8 or higher
 - System Bluetooth version 5.2 & Android Bluetooth version 5.3
+- empty (0.6.23c)
 
 ### Installation
 
@@ -40,7 +38,7 @@
 
 - Download the package using (https://sourceforge.net/projects/empty/) or use an existing/already downloaded zip file of the empty package
 - The code is tested with empty-0.6.23c 
-- Extract the zip folder for the *empty* package. Move this folder to **home** directory
+- Extract the zip folder for the *empty* package.  Move this folder to **home** directory
 - Open a terminal
 - `cd empty-0.6.23c`
 - `make`
@@ -57,7 +55,16 @@
 ##### ROS2 packages
 
 - Create a ROS2 workspace using `mkdir -p zat_ws/src` or if a ROS2 workspace already exists use `cd zat_ws/src` 
-- In src, download **consor** repository and **zat_ros2_msgs** package
+- In src, download **consor** and **zat_ros2_msgs** repositories.
+    - If GitLab is [setup preferably with SSH](https://docs.gitlab.com/user/ssh/) and access to [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs) is granted then clone the repositories using the following command:
+        ```
+        # Clone zat_ros2_msgs repository
+        git clone git@git.inf.h-brs.de:zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs.git
+
+        # Clone consor repository
+        git clone git@git.inf.h-brs.de:zat-rhein-ruhr/zat-prototype-demo/consor.git
+        ```
+    - If GitLab is not setup, then manually download the repositories.
 
 
 ### Usage/Steps
@@ -70,7 +77,7 @@
 - To test the application, follow the steps:
     - Set the sampling rate (to 1 or 2 Hz for simplicity)
     - Set sensor type to any sensor (If not connected to any sensor, then set the sensor type to a simulator e.g. tempSimulator)
-    - Click start sampling. This should prompt a dialog box asking to allow permissions if not already granted. If the sampling does not start after granting permission, click start sampling again. 
+    - Click start sampling.  This should prompt a dialog box asking to allow permissions if not already granted.  If the sampling does not start after granting permission, click start sampling again. 
     - Click stop sampling to stop the sampling. 
 
 
@@ -83,7 +90,7 @@
 - `source install/setup.bash`
 - `ros2 launch physio_sensor launch.py`
 
-- The andoid device on executing ros2 launch may show a dialog box asking to pair with the system. Allow pairing. Then, the data is transferred and gets published. 
+- The andoid device on executing ros2 launch may show a dialog box asking to pair with the system.  Allow pairing.  Then, the data is transferred and gets published. 
 
 
 ##### Notes
@@ -107,4 +114,4 @@
     - whether *empty* package is installed on the system (refer to above section Installation: 'empty' package)
 
 
-- If the eSense_SDK_2 application does not open/crashes, go to the app settings on the android device and enable *Nearby Devices* permissions. Also check if Bluetooth is enabled on the device and if Bluetooth is OFF, switch Bluetooth ON.
+- If the eSense_SDK_2 application does not open/crashes, go to the app settings on the android device and enable *Nearby Devices* permissions.  Also check if Bluetooth is enabled on the device and if Bluetooth is OFF, switch Bluetooth ON.

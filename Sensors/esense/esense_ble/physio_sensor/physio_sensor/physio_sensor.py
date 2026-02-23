@@ -1,5 +1,25 @@
 #!/usr/bin/python3.10
+"""
+A ROS node that gets data from Esense sensors and publishes the acquired data to a ROS topic using Bluetooth.
 
+Subscribers:
+    None
+
+Publishers:
+    /sensor/esense/data: A ROS2 topic that publishes the received eSense data
+
+Parameters:
+    esense_bash_script_path (str, default: None)
+    esense_topic (str, default: /sensor/esense/data)
+    esense_timer (float, default: 1.0)
+
+Description:
+    This code connects to the eSense android application via Bluetooth.  To connect to the application, this code uses BASH scripts.  
+    The data received is then published to the respective ROS2 topic.
+
+Author:
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
 import rclpy
 import rclpy.duration
 from rclpy.node import Node
@@ -11,13 +31,26 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 class SensorDataEsense(Node):
+    """
+    Acquire and publish sensor data using Bluetooth.
+    """
     def __init__(self, 
-                 bash_script_path=None, 
-                 sensor_topic: str = '/sensor/esense/data', # ROS topic
+                 bash_script_path: str = None, 
+                 sensor_topic: str = '/sensor/esense/data',
                  sample_no: int = 0,
                  sample_data: float = 1e-5,
                  buffer: float = 1.0
                  ):
+        """
+        Initialise the SensorDataEsense class.
+
+        Arguments:
+        str bash_script_path: Path to the BASH script
+        str sensor_topic: ROS topic
+        int sample_no: Default sample no
+        float sample_data: Default value for sample data 
+        float buffer: Determines intervals at which timer_callback() is called
+        """
         super().__init__('sensor_data_esense') # ROS node
         
         self.i = 0 # counter
@@ -38,9 +71,7 @@ class SensorDataEsense(Node):
 
         self.bash_script_path = bash_script_path
         self.get_logger().info(f'Bash script path: {self.bash_script_path}')
-
         self.batch_time = buffer
-
         self.sample_no = sample_no
         self.sample_data = sample_data
 
@@ -49,18 +80,19 @@ class SensorDataEsense(Node):
         # https://stackoverflow.com/questions/13332268/how-to-use-subprocess-command-with-pipes
         # Start a subprocess to run the bash script
         self.process = subprocess.Popen(
-            self.bash_script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            self.bash_script_path, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = True
         )
 
         self.get_logger().info('Starting node for eSense sensor data')
-
         self.timer = self.create_timer(buffer, self.timer_callback)
-        
 
     def timer_callback(self):
+        """
+        A callback function that connects to the sensor, acquires data from it and then publishes this information to a ROS topic at regular intervals.
+        """
         try:
-            start_time=self.get_clock().now()
-            total_duration = rclpy.duration.Duration(nanoseconds=int(self.batch_time)*1e9)
+            start_time = self.get_clock().now()
+            total_duration = rclpy.duration.Duration(nanoseconds = int(self.batch_time)*1e9)
 
             batch_msg = EsenseStream()
             batch_data = []
@@ -93,18 +125,20 @@ class SensorDataEsense(Node):
             batch_msg.data = batch_data
             self.publish_sensor_data_.publish(batch_msg)
             self.get_logger().info(f'BATCH PUBLISHED-------------')
-
         except KeyboardInterrupt:
             rclpy.shutdown()
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    publish_data=SensorDataEsense()
+def main(args = None):
+    """
+    Run the SensorDataEsense Node.
+    """
+    rclpy.init(args = args)
+    publish_data = SensorDataEsense()
     rclpy.spin(publish_data)
-
     publish_data.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

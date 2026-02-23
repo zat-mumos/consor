@@ -3,8 +3,8 @@
 <package format="3">
   <name>physio_sensor</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">swathy</maintainer>
+  <description>A ROS node that gets data from Esense sensors and publishes the acquired data to a ROS topic using Bluetooth.</description>
+  <maintainer email="swathy.cheruvalath@smail.inf.h-brs.de">Swathy Cheruvalath</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>
