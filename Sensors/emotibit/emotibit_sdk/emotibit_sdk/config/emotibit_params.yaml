@@ -15,4 +15,3 @@ sensor_data_emotibit_with_sdk:
       - /emotibit/eda
       - /emotibit/temp
     emotibit_timer: 5.0
-    callback_timer: 1.0

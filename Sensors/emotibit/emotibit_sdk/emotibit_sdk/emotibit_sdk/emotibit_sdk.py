@@ -40,7 +40,6 @@ class SensorDataEmotibitWithSdk(Node):
 
     def __init__(self,
                  batch_time: float = 1e-5, # the frequency at which the data should be collected
-                 callback_timer: float = 1e-5, # timer for the callback function
                  type_stream: list  = ["default_stream"],
                  sensor_topic: list = ["deafault_topic"]
                  ):
@@ -71,12 +70,9 @@ class SensorDataEmotibitWithSdk(Node):
         # Declare parameters
         self.declare_parameter('topic_names', sensor_topic)
         self.declare_parameter('stream_names', type_stream)
-        self.declare_parameter('callback_timer', callback_timer)
         self.declare_parameter('emotibit_timer', batch_time)
         
         # Get parameter values
-        callback_timer = self.get_parameter('callback_timer').value
-        self.get_logger().debug(f'callback_timer: {callback_timer} ')
         batch_time = self.get_parameter('emotibit_timer').value
         self.get_logger().debug(f'Emotibit_timer: {batch_time} ')
         type_stream = self.get_parameter('stream_names').value
@@ -87,7 +83,6 @@ class SensorDataEmotibitWithSdk(Node):
         self.topics = sensor_topic
         self.batch_time = batch_time
         self.stream_type = type_stream
-        self.callback_timer = callback_timer
         self.get_logger().debug(f'Beginning code ... ')
         self.get_logger().info(f'Starting node for EmotiBit sensor (publishing frequency: {batch_time})')
         self.get_logger().debug(f'Stream type: \n{type_stream}\n\nTopic: \n{sensor_topic})')
@@ -97,15 +92,12 @@ class SensorDataEmotibitWithSdk(Node):
         }
             
         self.publisher = {} # Keep track of publishers
-        self.current_threads = [] # keep track of threads
 
         for stream, topic in zip(self.stream_type, self.topics):
             self.get_logger().debug(f'Creating publisher for EmotiBit sensor (Stream type: {stream} & Topic: {topic})')
             self.publisher[stream] = self.create_publisher(EmotibitMsg, topic, 10)
-        
-        self.timer_call = self.create_timer(self.callback_timer, self.timer_callback)
 
-    def timer_callback(self):
+    def run(self):
         """
         A callback function which connects to the sensor, acquires data from it and then publishes this information to a ROS topic at regular intervals.
         """
@@ -174,8 +166,10 @@ class SensorDataEmotibitWithSdk(Node):
                 self.t0_n_samples['aux']['srate'] = srate_aux
                 self.t0_n_samples['anc']['srate'] = srate_anc
 
+                streams_ = []
                 # for each stream, publish data
                 for stream in self.stream_type:
+                    streams_.append(stream)
                     curr_publisher = self.publisher[stream]
                     curr_const = self.constants.get(stream)
                     channels = []
@@ -235,11 +229,10 @@ class SensorDataEmotibitWithSdk(Node):
                     for k, ch in enumerate(channels):
                         msg = EmotibitData()
                         if stream in ['EDA', 'Temperature']:
-                            self.get_logger().info(f"if: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
+                            self.get_logger().debug(f"if: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
                             msg.channel = 0
                         else:
-                            self.get_logger().info(f"else: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
-                            # self.get_logger().debug(f"\nData:\n{temp_data}\n")
+                            self.get_logger().debug(f"else: Stream name: {stream}\nChannel No: {k+1}\nk: {k}\nch: {ch}")
                             msg.channel = k+1
                         temp_data = sensor_data.iloc[:, k] # columns range from 0 - no_channels-1
                         temp_data = temp_data.to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
@@ -249,7 +242,7 @@ class SensorDataEmotibitWithSdk(Node):
                         temp_msg_data.append(msg) # One list per channel
                     main_msg.data = temp_msg_data
                     curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
-                    self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
+                self.get_logger().info(f"Message Published for {streams_}!", throttle_duration_sec=1.0)
         except KeyboardInterrupt:
             self.get_logger().debug('Session in keyboard interrupt')
             self.get_logger().debug(f"self.t0_n_samples: {self.t0_n_samples}")
@@ -291,8 +284,7 @@ def main():
     sensor_node.get_logger().debug("Node has been initialised")
     sensor_node.get_logger().debug(f"Node: {sensor_node}\nType: {type(rclpy.spin)}")
     try:
-        rclpy.spin(sensor_node)
-        sensor_node.get_logger().debug("rclpy.spin() called ................")
+        sensor_node.run()
     except KeyboardInterrupt:
         sensor_node.get_logger().debug(f"KeyBoard Interrupt")
     finally:
