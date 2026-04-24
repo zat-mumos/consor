@@ -6,15 +6,9 @@ Combine, sync and publish data to ROS2 topic
 Subscribers:
      /sensor/movella/imu_data: Subscriber for Movella sensor topic
      /sensor/esense/data: Subscriber for eSense sensor topic
-     /emotibit/acc: Subscriber for EmotiBit - Acclerometer topic
-     /emotibit/gyro: Subscriber for EmotiBit - Gyroscope topic
-     /emotibit/mag: Subscriber for EmotiBit - Magnetometer topic
-     /emotibit/ppg: Subscriber for EmotiBit - PPG topic
-     /emotibit/eda: Subscriber for EmotiBit - EDA topic
-     /emotibit/temp: Subscriber for EmotiBit - Temperature topic
+     /sensor/emotibit/data: Subscriber for EmotiBitSyncData
 
 Publishers:
-     sensor/emotibit/data: Publishes data from all EmotiBit channels (Accelerometer, Gyroscope, Magnetometer, PPG, EDA, Temperature)
      sensor/consor/wearable/data: Publishes batched data from all available sensors
      sensor/synched/data: Publishes synched data
 
@@ -22,18 +16,11 @@ Parameters:
      sync_period (float, default: 0.001)
      movella_topic (str, default: /sensor/movella/imu_data)
      esense_topic (str, default: /sensor/esense/data)
-     emotibit_accelerometer_topic (str, default: /emotibit/acc)
-     emotibit_gyroscope_topic (str, default: /emotibit/gyro)
-     emotibit_magnetometer_topic (str, default: /emotibit/mag)
-     emotibit_ppg_topic (str, default: /emotibit/ppg)
-     emotibit_eda_topic (str, default: /emotibit/eda)
-     emotibit_temperature_topic (str, default: /emotibit/temp)
      emotibit_synch_topic (str, default: sensor/emotibit/data)
      sync_topic (str, default: sensor/synched/data)
 
 Description:
-     This code subscribes to all available sensors.  If EmotiBit sensor is present, then it gets data from each emotibit topic and publishes 
-     all channels/modalities into a single topic.  This code batches data from all available sensors and publishes them to another topic.  It 
+     This code subscribes to all available sensors.  This code batches data from all available sensors and publishes them to another topic.  It 
      synches data from all available sensors based on their timestamps and publishes them to a separate topic.
 
 Author:
@@ -66,12 +53,6 @@ class ZatConsorNode(Node):
           sync_period: float = 0.001,
           movella_topic: str = '/sensor/movella/imu_data',
           esense_topic: str = '/sensor/esense/data',
-          emotibit_accelerometer_topic: str = '/emotibit/acc',
-          emotibit_gyroscope_topic: str = '/emotibit/gyro',
-          emotibit_magnetometer_topic: str = '/emotibit/mag',
-          emotibit_ppg_topic: str = '/emotibit/ppg',
-          emotibit_eda_topic: str = '/emotibit/eda',
-          emotibit_temperature_topic: str = '/emotibit/temp',
           emotibit_synch_topic: str = 'sensor/emotibit/data',
           consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data',
           sync_topic: str = 'sensor/synched/data'):
@@ -85,12 +66,6 @@ class ZatConsorNode(Node):
                     ('sync_period', sync_period),
                     ('movella_topic', movella_topic),
                     ('esense_topic', esense_topic),
-                    ('emotibit_accelerometer_topic', emotibit_accelerometer_topic),
-                    ('emotibit_gyroscope_topic', emotibit_gyroscope_topic),
-                    ('emotibit_magnetometer_topic', emotibit_magnetometer_topic),
-                    ('emotibit_ppg_topic', emotibit_ppg_topic),
-                    ('emotibit_eda_topic', emotibit_eda_topic),
-                    ('emotibit_temperature_topic', emotibit_temperature_topic),
                     ('emotibit_synch_topic', emotibit_synch_topic),
                     ('consor_wearable_sensor_topic', consor_wearable_sensor_topic),
                     ('sync_topic', sync_topic)
@@ -99,12 +74,6 @@ class ZatConsorNode(Node):
           sync_period = self.get_parameter('sync_period').value
           movella_topic=self.get_parameter('movella_topic').value
           esense_topic = self.get_parameter('esense_topic').value
-          emotibit_accelerometer_topic = self.get_parameter('emotibit_accelerometer_topic').value
-          emotibit_gyroscope_topic = self.get_parameter('emotibit_gyroscope_topic').value
-          emotibit_magnetometer_topic = self.get_parameter('emotibit_magnetometer_topic').value
-          emotibit_ppg_topic = self.get_parameter('emotibit_ppg_topic').value
-          emotibit_eda_topic = self.get_parameter('emotibit_eda_topic').value
-          emotibit_temperature_topic = self.get_parameter('emotibit_temperature_topic').value
           emotibit_synch_topic = self.get_parameter('emotibit_synch_topic').value
           consor_wearable_sensor_topic=self.get_parameter('consor_wearable_sensor_topic').value 
           sync_topic=self.get_parameter('sync_topic').value 
@@ -154,39 +123,10 @@ class ZatConsorNode(Node):
                                                              self._esense_callback, 
                                                              10)
         
-          self._emotibit_accelerometer_subscriber = self.create_subscription(EmotibitMsg, 
-                                                                             emotibit_accelerometer_topic, 
-                                                                             self._emotibit_accelerometer_callback, 
-                                                                             10)
-        
-          self._emotibit_gyroscope_subscriber = self.create_subscription(EmotibitMsg,
-                                                                         emotibit_gyroscope_topic, 
-                                                                         self._emotibit_gyroscope_callback, 
-                                                                         10)
-        
-          self._emotibit_magnetometer_subscriber = self.create_subscription(EmotibitMsg, 
-                                                                            emotibit_magnetometer_topic, 
-                                                                            self._emotibit_magnetometer_callback, 
-                                                                            10)
-        
-          self._emotibit_ppg_subscriber = self.create_subscription(EmotibitMsg, 
-                                                                   emotibit_ppg_topic, 
-                                                                   self._emotibit_ppg_callback, 
-                                                                   10)
-        
-          self._emotibit_eda_subscriber = self.create_subscription(EmotibitMsg, 
-                                                                   emotibit_eda_topic, 
-                                                                   self._emotibit_eda_callback, 
-                                                                   10)
-        
-          self._emotibit_temperature_subscriber = self.create_subscription(EmotibitMsg, 
-                                                                           emotibit_temperature_topic, 
-                                                                           self._emotibit_temperature_callback, 
-                                                                           10)
-        
-          self._emotibit_synch_publisher = self.create_publisher(EmotibitSynchData, 
-                                                                 emotibit_synch_topic, 
-                                                                 10)
+          self._emotibit_synch_subscriber = self.create_subscription(EmotibitSynchData, 
+                                                                     emotibit_synch_topic,
+                                                                     self._emotibit_flatten_msgs, 
+                                                                     10)
         
           self._consor_publisher = self.create_publisher(ZatConsorSynch, consor_wearable_sensor_topic, 10)
           self._sync_publisher = self.create_publisher(SynchData, sync_topic, 10)
@@ -269,6 +209,7 @@ class ZatConsorNode(Node):
                main_msg.data = batch_sync
                self.get_logger().debug(f"-------- \nmain_msg: {main_msg} \n----------------------")
                self._sync_publisher.publish(main_msg)
+          if self.merged != {}: # only print the statement if data is present in self.merged (added since it is printed outside the for loop)
                self.get_logger().info(f"Published synched msg")
 
           self._consor_publisher.publish(msg)
@@ -413,74 +354,7 @@ class ZatConsorNode(Node):
           self.esense_data = dict(sorted(self.esense_data.items()))
           self.get_logger().debug(f"{self.esense_data}\n")
 
-     # Since each modality in emotibit has its own ros2 topic, when new msgs are received emotibit_sync() is called
-     def _emotibit_accelerometer_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from Accelerometer's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/acc topic.
-          """
-          data = msg
-          stream = "accelerometer"
-          self._emotibit_synch(data,stream)
-
-     def _emotibit_gyroscope_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from Gyroscope's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/gyro topic.
-          """
-          data = msg
-          stream = "gyroscope"
-          self._emotibit_synch(data,stream)
-
-     def _emotibit_magnetometer_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from Magnetometer's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/mag topic.
-          """
-          data = msg
-          stream = "magnetometer"
-          self._emotibit_synch(data,stream)
-
-     def _emotibit_ppg_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from PPG's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/ppg topic.
-          """
-          data = msg
-          stream = "ppg"
-          self._emotibit_synch(data,stream)  
-
-     def _emotibit_eda_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from EDA's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/eda topic.
-          """
-          data = msg
-          stream = "eda"
-          self._emotibit_synch(data,stream) 
-
-     def _emotibit_temperature_callback(self, msg: EmotibitMsg):
-          """
-          A callback function for EmotiBit sensors that is executed whenever a new msg from Temperature's topic is received.
-          
-          Arguments:
-          EmotibitMsg msg: The message received from /emotibit/temp topic.
-          """
-          data = msg
-          stream = "temperature"
-          self._emotibit_synch(data,stream)      
-     
-     def _emotibit_synch(self, data: EmotibitMsg, stream: str):
+     def _emotibit_synch(self, msg: EmotibitMsg, stream: str):
           """
           This function combines data from all modalities from emotibit that is published as separate topics into a single msg.
 
@@ -515,7 +389,8 @@ class ZatConsorNode(Node):
 
           Returns:
           dict flat_emotibit_data: A dictionary of flattened msgs
-          """
+          """ 
+          self.get_logger().info("Emotibit data received.")
           emotibit_data = defaultdict(list)
           for stream in self._emotibit_streams:
                if stream == 'accelerometer':
@@ -537,10 +412,15 @@ class ZatConsorNode(Node):
                     msg = msg_.temperature[0]
                     s = 'temp'
                self.get_logger().debug(f"msg_: {msg_}")
+
+               if self._emotibit_synch_data is None:
+                    self._emotibit_synch_data = EmotibitSynchData()
+               setattr(self._emotibit_synch_data, stream, [msg])
+               
                flattened_data = self._emotibit_flatten_helper_msg(msg, s, emotibit_data)
-               flat_emotibit_data = dict(sorted(flattened_data.items()))
-          self.get_logger().debug(f"{flat_emotibit_data.keys()}\n{flat_emotibit_data}\n\n")
-          return flat_emotibit_data
+               self.synched_flattened_emotibit_data = dict(sorted(flattened_data.items()))
+          self.get_logger().debug(f"{self.synched_flattened_emotibit_data.keys()}\n{self.synched_flattened_emotibit_data}\n\n")
+          
 
      def _emotibit_flatten_helper_msg(self, msg: EmotibitMsg, s: str, emotibit_data: dict):
           """
@@ -778,12 +658,6 @@ def main():
      consor =  ZatConsorNode(
           movella_topic = '/sensor/movella/imu_data',
           esense_topic = '/sensor/esense/data',
-          emotibit_accelerometer_topic = '/emotibit/acc',
-          emotibit_gyroscope_topic= '/emotibit/gyro',
-          emotibit_magnetometer_topic = '/emotibit/mag',
-          emotibit_ppg_topic = '/emotibit/ppg',
-          emotibit_eda_topic = '/emotibit/eda',
-          emotibit_temperature_topic= '/emotibit/temp',
           emotibit_synch_topic = 'sensor/emotibit/data',
           consor_wearable_sensor_topic = 'sensor/consor/wearable/data')
      rclpy.spin(consor)

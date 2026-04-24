@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'publish_emotibit_data_with_sdk = emotibit_sdk.emotibit_sdk:main'
+            'publish_emotibit_data_with_sdk = emotibit_sdk.emotibit_sdk:main',
+            'combine_emotibit_modalities = emotibit_sdk.combine_emotibit:main'
         ],
     },
 )
