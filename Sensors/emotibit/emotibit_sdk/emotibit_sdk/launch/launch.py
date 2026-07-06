@@ -16,7 +16,8 @@ def generate_launch_description():
         executable='publish_emotibit_data_with_sdk',
         name='sensor_data_emotibit_with_sdk',
         output='log',
-        parameters= [os.path.join(get_package_share_directory(package_name_emotibit), 'config', 'emotibit_params.yaml')]
+        parameters= [os.path.join(get_package_share_directory(package_name_emotibit), 'config', 'emotibit_params.yaml')],
+        emulate_tty=True
         )]
     )
     
