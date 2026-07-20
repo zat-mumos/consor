@@ -15,6 +15,7 @@
 - BLE dongle that is included in the kit
 - [brainflow](https://brainflow.readthedocs.io/en/stable/)
 - *zat_ros2_msgs*
+- *common_functions*
 
 #### Tested Environment
 

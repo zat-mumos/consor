@@ -27,12 +27,6 @@ def generate_launch_description():
         default_value='1.0',
         description='Buffer time for sample collection. The frequency at which the data should be collected'
     )
-    
-    bci_callback_timer = DeclareLaunchArgument(
-        'openbci_callback_timer',
-        default_value='1.0',
-        description='Timer for the callback function'
-    )
 
     bci_port = DeclareLaunchArgument(
        'port_name',
@@ -49,7 +43,6 @@ def generate_launch_description():
             'modality_name': LaunchConfiguration('modality_name'),
             'get_accel': LaunchConfiguration('get_accel'),
             'openbci_timer': LaunchConfiguration('openbci_timer'),
-            'openbci_callback_timer': LaunchConfiguration('openbci_callback_timer'),
             'port_name' : LaunchConfiguration('port_name')
         }],
     )
@@ -58,7 +51,6 @@ def generate_launch_description():
         bci_modality,
         bci_accel,
         bci_timer,
-        bci_callback_timer,
         bci_port,
         openbci_node
     ])

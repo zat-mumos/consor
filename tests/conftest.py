@@ -1,14 +1,16 @@
 import pytest
 from unittest.mock import create_autospec
 import rclpy
-from emotibit_sdk.sensor import EmotibitSensor
+from emotibit_sdk.emotibit_sdk import EmotibitSensor
+from openbci_pkg.sensor import OpenbciSensor
 from emotibit_sdk.custom_exceptions import InvalidChannelNameError
-from src.consor.tests.test_emotibit.constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
+from src.consor.tests.test_openbci.openbci_constants import board_data, board_description
+from src.consor.tests.test_emotibit.emotibit_constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
 
 """This file has functions that are called in multiple tests."""
 
 @pytest.fixture
-def mocksensor(monkeypatch):
+def mocksensorEmotibit(monkeypatch):
     obj_sensor_class = EmotibitSensor()
     patches = {
         'prepare': None,
@@ -20,7 +22,7 @@ def mocksensor(monkeypatch):
 
     for method_name, method_implementation in patches.items():
         method_instance = getattr(obj_sensor_class, method_name)
-        mock_method = create_autospec(method_instance) if method_implementation!=None else create_autospec(method_instance) # , side_effect=method_implementation)
+        mock_method = create_autospec(method_instance)
         mock_method.return_value = method_implementation
         monkeypatch.setattr(obj_sensor_class, method_name, mock_method)
     
@@ -60,6 +62,34 @@ def mocksensor(monkeypatch):
 
     return obj_sensor_class
 
+
+@pytest.fixture
+def mocksensorOpenbci(monkeypatch):
+    obj_sensor_class = OpenbciSensor()
+    patches = { # for methods without arguments
+        'init_board': None,
+        'enable_accel': None,
+        'prepare': None,
+        'is_board_prepared': True, 
+        'start_streaming': None,
+        'stop_streaming': None,
+        'release_session': None,
+        'get_board_data': board_data,
+        'get_board_description': board_description
+    }
+
+    for method_name, method_implementation in patches.items():
+        method_instance = getattr(obj_sensor_class, method_name)
+        mock_method = create_autospec(method_instance)
+        mock_method.return_value = method_implementation
+        monkeypatch.setattr(obj_sensor_class, method_name, mock_method)
+
+    def init_parser(port: str):
+        return port
+    mock_method = create_autospec(obj_sensor_class.init_parser, side_effect = init_parser)
+    monkeypatch.setattr(obj_sensor_class, "init_parser", mock_method)
+
+    return obj_sensor_class
 
 
 @pytest.fixture(scope='module', autouse=True)

@@ -1,187 +1,262 @@
-import argparse
-import time
-import os
-from ament_index_python.packages import get_package_share_directory
+"""
+A ROS node that gets data from the OpenBCI sensor and publishes it to a ROS topic
 
+Subscribers:
+    None
+
+Publishers:
+    One publisher per modality. For example, if modality = 'eeg' then publisher topic is '/bci/eeg'. 
+
+Parameters:
+    - modality_name (str, default: 'default_modality')
+    - get_accel (Literal[0, 1], default: 0)
+    - port_name (str, default: 'no_port')
+    - openbci_timer (float, default: 1e-5)
+
+Description:
+    This code connects to the sensor using BrainFlow SDK. The data acquired from the sensor is published to a ROS2 topic.
+
+Author: 
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
+
+import time
+import traceback
+from typing import Literal
 import pandas as pd
 import numpy as np
-
-from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-
 import rclpy
 from rclpy.logging import LoggingSeverity
 from rclpy.node import Node
-
 from zat_ros2_msgs.msg import Bci, BciData
 from builtin_interfaces.msg import Time
+from openbci_pkg.sensor import OpenbciSensor
+from common_functions.common import convert_time
 
 
 class SensorDataOpenbci(Node):
+    """
+    Acquire and publish sensor data from OpenBCI using BrainFlow SDK.
+    """
     def __init__(self,
+                 sensor: OpenbciSensor,
                  modality: str = 'default_modality',
-                 get_accel: int = 0,
+                 get_accel: Literal[0, 1] = 0,
                  port: str = 'no_port',
                  batch_time: float = 1e-5, # the frequency at which the data should be collected
-                 callback_time: float = 1e-5, # timer for the callback function
                  ):
+        """
+        Initialise the SensorDataOpenbci class.
+        """
         super().__init__('sensor_data_openbci')
 
-        self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to print the lines in DEBUG mode
-
-        self.i = 0 # counter
+        # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to print the lines in DEBUG mode
 
         # Declare parameters
         self.declare_parameter('modality_name', modality)
         self.declare_parameter('get_accel', get_accel)
         self.declare_parameter('port_name', port)
-        self.declare_parameter('openbci_timer', batch_time)    
-        self.declare_parameter('openbci_callback_timer', callback_time)    
+        self.declare_parameter('openbci_timer', batch_time)
 
         # Get parameter values
         modality = self.get_parameter('modality_name').value
         port = self.get_parameter('port_name').value
         batch_time = self.get_parameter('openbci_timer').value
-        callback_time = self.get_parameter('openbci_callback_timer').value
         get_accel = self.get_parameter('get_accel').value
-        get_accel = bool(get_accel)
+        
+        if not isinstance(modality, str):
+            raise TypeError(f"Parameter 'modality_name' of value {modality} and type {type(modality)} is not valid. It should be a string value.")
+        if str.lower(modality) not in ['ecg', 'eeg', 'emg', 'eog']:
+            raise ValueError(f"Modality ({modality}) is not valid.")
+        if not isinstance(port, str):
+            raise TypeError(f"Parameter 'port_name' of value {port} and type {type(port)} is not valid. It should be a string value.")
+        if port == 'no_port':
+            raise ValueError(f"Port ({port}) is not valid.")
+        if not isinstance(get_accel, int):
+            raise TypeError(f"Parameter 'get_accel' of value {get_accel} and type {type(get_accel)} is not valid. It should either be 0 or 1.")
+        if get_accel not in [0, 1]:
+            raise ValueError(f"Parameter 'get_accel' of value {get_accel} is not valid. It should either be 0 or 1.")
+        
+        self.i = 0 # counter
+        self.list_channel_names = []
 
         self.modality = modality
         self.topics = f"/bci/{str.lower(self.modality)}" # i.e., if modality='eeg' then topic='/bci/eeg'
         self.port = port
         self.batch_time = batch_time
-        self.callback_time = callback_time
-        self.bool_get_accel = get_accel
+        self.bool_get_accel = bool(get_accel)
 
-        # self.constants = {
-        #     'eeg':1,
-        #     'ecg':2,
-        #     'emg':3,
-        #     'eog':4,
-        #     'resistance':5,
-        #     'accel':6
-        # }
-
+        sensor.init_parser(self.port)
+        sensor.init_board()
+        self._openbci = sensor
+        
         # Print all launch values
-        self.get_logger().debug(f"Modality: {self.modality}\nTopics: {self.topics}\nPort: {self.port}\nBatch Time: {self.batch_time}\nCallback Timer: {self.callback_time}\nAccel: {self.bool_get_accel}\naccel_param: {get_accel}")
+        self.get_logger().debug(f"Modality: {self.modality}\nTopics: {self.topics}\nPort: {self.port}\nBatch Time: {self.batch_time}\nAccel: {self.bool_get_accel}\naccel_param: {get_accel}\nself._openbci:\t{self._openbci}")
 
         self.publisher = {} # keep track of publishers
-
         # Create publishers
-        self.publisher[f"{str.lower(self.modality)}"] = self.create_publisher(BciData, self.topics, 10) # topic for modality e.g. /bci/eeg
-        self.publisher["resistance"] = self.create_publisher(BciData, "/bci/res", 10) # topic for resistance channel
-
-        if self.bool_get_accel:
-            self.publisher["accel"] = self.create_publisher(BciData, "/bci/acc", 10) # topic for resistance channel
-
         self.get_logger().debug("Creating publsher")
-
-
-        # Create a timer
-        self.timer_call = self.create_timer(self.callback_time, self.timer_callback)
-        self.get_logger().debug("Creating timer")
-
+        self.publisher[f"{str.lower(self.modality)}"] = self.create_publisher(BciData, self.topics, 10) # topic for modality e.g. /bci/eeg
+        self.list_channel_names.append(self.modality)
+        if self.bool_get_accel:
+            self.publisher["accel"] = self.create_publisher(BciData, "/bci/acc", 10)
+            self.list_channel_names.append('accel')
+        self.get_logger().debug(f"self.list_channel_name: \n{self.list_channel_names}")
+        self.t0_n_samples = {}
+        self.metadata = {}
+        temp_var = {'t0': None, 'n_samples': 0, 'n': []}
+        temp_var2 = {'srate': 0, 'channels': [], 'timestamp_channel': []}
+        for i, channel_name in enumerate(self.list_channel_names):
+            if channel_name not in list(self.t0_n_samples.keys()):
+                self.t0_n_samples[channel_name] = temp_var.copy()
+                self.metadata[channel_name] = temp_var2.copy()
     
-    def timer_callback(self):
-        try:
-            self.get_logger().debug("In timer_callback")
-            while rclpy.ok():
-                self.get_logger().debug("In timer_callback 2")
-                if self.i == 0:
-                    parser = argparse.ArgumentParser()
-                    self.get_logger().debug("In timer_callback 3")
-                    parser.add_argument('--serial-port', type=str, help='serial port', required=False, default=self.port)
-                    self.get_logger().debug("In timer_callback 4")
-
-                    self.get_logger().info(f"Modality2: {self.modality}\nTopics: {self.topics}\nPort: {self.port}\nBatch Time: {self.batch_time}\nCallback time: {self.callback_time}")
-                    
-                    params = BrainFlowInputParams()
-                    params.serial_port = self.port
-
-                    self.get_logger().debug(f"Params.serial_port: {params.serial_port}")
-
-                    board_ids = BoardIds.GANGLION_BOARD    
-                    board = BoardShim(board_ids, params)
-                    self.get_logger().debug(f"Board: {board}")
-
-                    board.prepare_session()
-                    self.i +=1
-                    self.get_logger().debug(f"i = {self.i}")
-
-                board.start_stream ()
-                time.sleep(self.batch_time)
-
-                data = board.get_board_data()  # get all data and remove it from internal buffer
-                
-                board.stop_stream()
-                # board.release_session()
-
-                self.get_logger().debug(f"Data (transposed - shape): {pd.DataFrame(np.transpose(data)).shape}") #\ndata (shape): {pd.DataFrame(data).shape}\nData (w/o transposing):\n{pd.DataFrame(data)}")
-                self.get_logger().debug(f"Board Description: {BoardShim.get_board_descr(board_ids)}")
-                
-                # pd.DataFrame(data).to_csv("/home/swathy/.ros/data.csv")
-
-                data_to_publish = pd.DataFrame(np.transpose(data))
-                board_descr = BoardShim.get_board_descr(board_ids)
-
-                self.get_logger().debug(f"Timestamp Channel: {board_descr['timestamp_channel']}")
-
-
-                list_channels = [f"{str.lower(self.modality)}", 'resistance']
+    def check_sensor_prepared(self):
+        """Connect to the sensor and prepare it for streaming. Raise an error if the sensor if not ready (is_board_prepared() returns False) after 5 tries."""
+        for _ in range(5):
+            self.i += 1
+            self.get_logger().info("Preparing session")
+            self._openbci.prepare()
+            if not self._openbci.is_board_prepared():
+                if self.i >= 5:
+                    self.get_logger().error("Unable to prepare session. Exiting code after 5 tries.")
+                    break
+            else:
                 if self.bool_get_accel:
-                    list_channels.append('accel')
+                    self._openbci.enable_accel()
+                self.get_logger().info("Session prepared")
+                break
 
-                for mod in list_channels:
-                    # get publisher corresponding to the 'mod'
-                    curr_publisher = self.publisher[mod]
+    def acquire_sensor_data(self) -> np.ndarray:
+        """Get data from the sensor. 
 
-                    main_msg = BciData()
-                    timestamp = data_to_publish.iloc[:, board_descr['timestamp_channel']].to_numpy(dtype=np.float64).tolist() # Pandas series -> Numpy array -> list
-                    main_msg.timestamp = [self.convert_time(t) for t in timestamp]
-                    self.get_logger().debug(f"mod: {mod}")
-                    # main_msg.modality = self.constants.get(mod)
-                    main_msg.srate = board_descr['sampling_rate']
+        Returns:
+            np.ndarray : data from sensor
+        """
+        time.sleep(self.batch_time)
+        data = self._openbci.get_board_data()  # get all data and remove it from internal buffer
+        return data
+    
+    def format_data(self, data: np.ndarray) -> pd.DataFrame:
+        """Format data acquired from the sensor.
+        Arguments:
+            np.ndarray data : Data from sensor
 
-                    mod_channel_name = f"{str.lower(mod)}_channels"
-                    temp_msg = []
-                    no_channels = board_descr[mod_channel_name]
-                    for k, ch in enumerate(no_channels):
-                        msg = Bci()
-                        self.get_logger().debug(f"Modality: {self.modality}\nChannel No: {k+1}, {ch}")
-                        msg.channel = k+1 
-                        msg.data = data_to_publish.iloc[:, ch].to_numpy(dtype=np.float64).tolist()
-                        temp_msg.append(msg)
-                    main_msg.data = temp_msg
+        Returns:
+            pd.DataFrame sensor_data : Data from the sensor
+        """
+        data_to_publish = pd.DataFrame(np.transpose(data))
+        return data_to_publish
+    
+    def modify_timestamp(self, channel_name: str, sensor_data: pd.DataFrame, timestamp_: list) -> list:
+        """Modify timestamp to be evenly spaced as uneven timestamps are received from BrainFlow.
+        Arguments:
+            str channel_name : Variable for current preset
+            pd.DataFrame sensor_data : Data for specified stream
+            list timestamp_ : Timestamp for 'sensor_data' provided by BrainFlow
 
-                    curr_publisher.publish(main_msg)
-                    self.get_logger().info(f'msg:\n{main_msg}\n--------**************---------\n')
+        Returns:
+            list timestamp : Evenly spaced timestamps
+        """
+        if self.t0_n_samples[channel_name]['t0'] == None:
+            self.t0_n_samples[channel_name]['t0'] = timestamp_[0]
+        n_samples = sensor_data.shape[0]
+        if self.t0_n_samples[channel_name]['n_samples'] == None:
+            self.t0_n_samples[channel_name]['n_samples'] = n_samples
+        timestamp = []
+        for i in range(n_samples):
+            new_ts = self.t0_n_samples[channel_name]['t0'] + (self.t0_n_samples[channel_name]['n_samples'] + i)/ self.metadata[channel_name]['srate']
+            timestamp.append(new_ts)
+        self.t0_n_samples[channel_name]['n_samples'] += n_samples
+        self.t0_n_samples[channel_name]['n'].append(n_samples)
+        return timestamp
+    
+    def get_board_metadata(self):
+        """Get OpenBCI board's descriotion and save it in a dict."""
+        for channel_name in self.list_channel_names:
+            board_descr = self._openbci.get_board_description()
+            timestamp_channel = board_descr['timestamp_channel']
+            srate = board_descr['sampling_rate']
+            modality_channel_name = f"{str.lower(channel_name)}_channels"
+            modality_channels = board_descr[modality_channel_name]
+            self.metadata[channel_name]['timestamp_channel'] = timestamp_channel
+            self.metadata[channel_name]['channels'] = modality_channels
+            self.metadata[channel_name]['srate'] = srate
+
+    def publish_data(self, timestamp: list, channel_name: str, channels: list, sensor_data: pd.DataFrame, curr_publisher: rclpy.publisher.Publisher):
+        """Publish data to ROS2 topic.
+        Arguments:
+            list timestamp : Timestamps for sensor data
+            str channel_name : Name of the channel
+            list channels : List of channels
+            pd.DataFrame sensor_data : Data acquired from the sensor
+            rclpy.publisher.Publisher : ROS2 publisher object
+        """
+        main_msg = BciData()
+        main_msg.timestamp = [convert_time(t) for t in timestamp]
+        main_msg.srate = self.metadata[channel_name]['srate']
+        temp_msg = []
+        for k, ch in enumerate(channels):
+            msg = Bci()
+            self.get_logger().debug(f"Channel name: {channel_name}\nChannel No, channel: {k+1}, {ch}")
+            msg.channel = k+1
+            msg.data = sensor_data[ch].to_numpy(dtype=np.float64).tolist()
+            temp_msg.append(msg)
+        main_msg.data = temp_msg
+        curr_publisher.publish(main_msg)
+
+    def acquire_and_publish_data(self):
+        """Communicate with the sensor, format the acquired data and publish the sensor data to ROS2 topic. 
+        If no data is received, then a warning is raised."""
+        if self.i == 0:
+            self.check_sensor_prepared()
+            self._openbci.start_streaming()
+        self.get_board_metadata()
+        all_data = self.acquire_sensor_data()
+        all_data = self.format_data(all_data)
+        if all_data.shape[0] != 0:
+            rows_zero = (all_data==0).all(axis=1)
+            all_data = all_data[~rows_zero]
+            for i, channel_name in enumerate(self.list_channel_names):
+                curr_publisher = self.publisher[channel_name]
+                channels = self.metadata[channel_name]['channels']
+                sensor_data = all_data[channels]
+                timestamp_channel = self.metadata[channel_name]['timestamp_channel']
+                timestamp_ = all_data[timestamp_channel]
+                timestamp = self.modify_timestamp(channel_name, sensor_data, timestamp_)
+                self.publish_data(timestamp, channel_name, channels, sensor_data, curr_publisher)
+            self.get_logger().info(f"Message Published for {self.list_channel_names}!", throttle_duration_sec=1.0)
+        else:
+            self.get_logger().warning(f"Waiting to receive data. Shape of the data received: {all_data.shape}")
+
+    def run(self):
+        """Runs the node continuously in a while loop until manually exited or any exception occurs."""
+        try:
+            while rclpy.ok():
+                self.acquire_and_publish_data()
         except KeyboardInterrupt:
-            board.stop_stream()
-            board.release_session()
-            rclpy.shutdown()
-
-
-    def convert_time(self, timestamp):
-        time = Time()
-        time.sec = int(timestamp)
-        time.nanosec = int((timestamp%1)*1e9)
-        return time
-
+            self.get_logger().info('Session in keyboard interrupt')
+        except Exception as e:
+            self.get_logger().info(f'Session in exception: {traceback.format_exc()}')
+        finally:
+            self._openbci.stop_streaming()
+            self.get_logger().info('Session stopped')
+            self._openbci.release_session()
+            self.get_logger().info('Session released')
 
 
 def main():
+    """Run the SensorDataOpenbci Node."""
+    sensor = OpenbciSensor()
     rclpy.init()
-    node = SensorDataOpenbci()
-
-    node.get_logger().debug("Node has been initialised")
+    sensor_node=SensorDataOpenbci(sensor=sensor)
+    sensor_node.get_logger().debug("Node has been initialised")
     try:
-        rclpy.spin(node)
-        node.get_logger().debug("rclpy.spin() called ................")
-    except KeyboardInterrupt:
-        node.get_logger().debug(f"KeyBoard Interrupt")
+        sensor_node.run()
     finally:
-        node.destroy_node()
+        sensor_node.destroy_node()
         rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

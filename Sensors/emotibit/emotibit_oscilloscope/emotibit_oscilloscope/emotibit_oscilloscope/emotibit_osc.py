@@ -28,6 +28,7 @@ from zat_ros2_msgs.msg import EmotibitStream
 from builtin_interfaces.msg import Time
 from pylsl import resolve_byprop, StreamInlet
 from threading import Thread
+from common_functions.common import convert_time
 
 class SensorDataEmotibitWithOscilloscope(Node):
     """
@@ -133,21 +134,6 @@ class SensorDataEmotibitWithOscilloscope(Node):
             self.get_logger().error(f"Error (Thread {id}): {e}")      
         except KeyboardInterrupt:
             rclpy.shutdown()
-
-    def convert_time(self, timestamp: float):
-        """
-        This function converts a float timestamp to seconds and nanoseconds.
-
-        Arguments:
-        float timestamp: timestamp in float
-
-        Returns:
-        builtin_interfaces.msg.Time : Timestamp in seconds and nanoseconds 
-        """
-        time = Time()
-        time.sec = int(timestamp)
-        time.nanosec = int((timestamp%1)*1e9)
-        return time
 
 
 def main():

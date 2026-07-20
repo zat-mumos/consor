@@ -35,6 +35,7 @@ from builtin_interfaces.msg import Time
 import pandas as pd
 import numpy as np
 from emotibit_sdk.sensor import EmotibitSensor
+from common_functions.common import convert_time
 
 class SensorDataEmotibitWithSdk(Node):
     """
@@ -285,7 +286,7 @@ class SensorDataEmotibitWithSdk(Node):
             rclpy.publisher.Publisher : ROS2 publisher object
         """
         main_msg = EmotibitMsg()
-        main_msg.timestamp = [self.convert_time(t) for t in timestamp]
+        main_msg.timestamp = [convert_time(t) for t in timestamp]
         curr_const = self.constants.get(stream)
         main_msg.stream = curr_const
         temp_msg_data = []
@@ -301,19 +302,6 @@ class SensorDataEmotibitWithSdk(Node):
             temp_msg_data.append(msg) # One list per channel
         main_msg.data = temp_msg_data
         curr_publisher.publish(main_msg) # One message per modality i.e. Accelerometer, Gyroscope, Magnetometer, ...
-        
-    def convert_time(self, timestamp: float) -> Time:
-        """Converts a float timestamp to seconds and nanoseconds.
-        Arguments:
-            float timestamp: timestamp in float
-
-        Returns:
-            builtin_interfaces.msg.Time : timestamp in seconds and nanoseconds
-        """
-        time = Time()
-        time.sec = int(timestamp)
-        time.nanosec = int((timestamp%1)*1e9)
-        return time
 
     def run(self):
         """Runs the node continuously in a while loop until manually exited or any exception occurs."""
