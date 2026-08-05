@@ -1,11 +1,13 @@
 import pytest
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, MagicMock, patch
 import rclpy
+import pylsl
 from emotibit_sdk.emotibit_sdk import EmotibitSensor
 from openbci_pkg.sensor import OpenbciSensor
 from emotibit_sdk.custom_exceptions import InvalidChannelNameError
 from src.consor.tests.test_openbci.openbci_constants import board_data, board_description
 from src.consor.tests.test_emotibit.emotibit_constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
+from src.consor.tests.test_esense.esense_constants import *
 
 """This file has functions that are called in multiple tests."""
 
@@ -98,3 +100,31 @@ def rclpy_init_shutdown():
     rclpy.init()
     yield
     rclpy.shutdown()
+
+@pytest.fixture(autouse=True)
+def mock_streaminlet(monkeypatch):
+    info = pylsl.StreamInfo(name="eSense", type="sensor_data", channel_count=4, 
+                        channel_format="string", source_id="lsl_esense_sensor_12345",
+                        nominal_srate=1.000000000000000)
+    
+    desc = info.desc()
+    desc.append_child('Metadata').append_child_value("Android_API_Level", stream_info_android_api_level)\
+        .append_child_value("Device_Name", stream_info_device_name)\
+        .append_child_value("Manufacturer_Name", stream_info_manufacturer_name)\
+        .append_child_value("Sensor_Type", stream_info_sensor_type)\
+        .append_child_value("Sampling_rate", stream_info_sampling_rate)\
+        .append_child_value("Units", stream_info_units)
+
+    mock_stream_inlet = MagicMock()
+    mock_stream_inlet.info.return_value = info
+    mock_stream_inlet.pull_sample.return_value = sample
+    
+    monkeypatch.setattr('src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl.StreamInlet',
+                    MagicMock(return_value=mock_stream_inlet))
+
+    return mock_stream_inlet
+    
+@pytest.fixture(autouse=True)
+def mock_resolve_byprop():
+    with patch('src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl.resolve_byprop') as mock_property:
+        yield mock_property
