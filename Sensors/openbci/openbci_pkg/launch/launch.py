@@ -1,3 +1,33 @@
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+ROS2 launch file for the OpenBCI sensor communicating via BrainFlow.
+
+Parameters:
+    - modality_name (str, default: 'default_modality')
+    - get_accel (Literal[0, 1], default: 0)
+    - port_name (str, default: 'no_port')
+    - openbci_timer (float, default: 1e-5)
+
+Description:
+    This launch file starts the OpenBCI sensor streaming using BrainFlow.
+
+Author:
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument

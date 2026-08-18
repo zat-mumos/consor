@@ -1,9 +1,26 @@
 #!/bin/bash
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
 
-# Dependencies bash script for sensors
+
+# Description: This script is used to install required dependencies to run the ROS packages for
+#        all the sensors (movella, esense, openbci, emotibit).
+# Author: Jay Parikh <jay.parikh@smail.inf.h-brs.de>
+
 
 SENSOR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 
 # Sensor script paths
 

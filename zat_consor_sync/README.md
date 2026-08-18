@@ -1,8 +1,8 @@
 # Zat Consor Sync
 
 A ROS 2 package for synchronizing multiple **Consor wearable sensors**.  The data from multiple sensors are:
-- batched together and published as a unified ROS message: `ZatConsorSynch.msg`. 
-- synchronised and published as a unified ROS message: `SyncData.msg`
+- batched together and published as a unified ROS message: **ZatConsorSynch.msg**. 
+- synchronised and published as a unified ROS message: **SyncData.msg**
 
 Currently supported sensors:
 1. **eSense**  
@@ -16,7 +16,7 @@ Currently supported sensors:
 
 - ROS 2 Humble 
 - Python 3.8+  
-- [`zat_ros2_msgs`](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs)  
+- [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs)  
 
 ---
 
@@ -30,15 +30,11 @@ Currently supported sensors:
 
 ## Installation
 
-Create a new ROS 2 workspace (or use an existing one) and clone the repository:
+Download the latest version of the release. Create a new ROS 2 workspace (or use an existing one) and add the repository to the src folder within the workspace:
 
 ```bash
 mkdir -p ~/zat_ws/src
 cd ~/zat_ws/src
-
-# Clone with SSH
-git clone git@git.inf.h-brs.de:zat-rhein-ruhr/zat-prototype-demo/consor.git
-
 ```
 Build the workspace and source it:
 

@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
 Combine, sync and publish data to ROS2 topic
@@ -56,9 +70,8 @@ class ZatConsorNode(Node):
           emotibit_synch_topic: str = 'sensor/emotibit/data',
           consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data',
           sync_topic: str = 'sensor/synched/data'):
-          """initialise ZatConsorNode class"""
           super().__init__('zat_consor_node')
-
+          """initialise ZatConsorNode class"""
 
           self.declare_parameters(
                namespace='',
@@ -354,32 +367,6 @@ class ZatConsorNode(Node):
           self.esense_data = dict(sorted(self.esense_data.items()))
           self.get_logger().debug(f"{self.esense_data}\n")
 
-     def _emotibit_synch(self, msg: EmotibitMsg, stream: str):
-          """
-          This function combines data from all modalities from emotibit that is published as separate topics into a single msg.
-
-          Arguments:
-          EmotibitMsg data: The message received from one of the Emotibit sensor modalities
-          str stream: The name of the modality for which the message is received
-          """
-          self.synched_flattened_emotibit_data = defaultdict(list)
-
-          if self._emotibit_synch_data is None:
-               self._emotibit_synch_data = EmotibitSynchData()
-               setattr(self._emotibit_synch_data, stream, [data])
-          else:
-               setattr(self._emotibit_synch_data, stream, [data])
-          
-          temp_var = [True if getattr(self._emotibit_synch_data, attr) not in (None, []) else False 
-                      for attr in self._emotibit_streams]
-          self.get_logger().debug(f"temp_var: {temp_var}")
-          if all(temp_var):
-               self.get_logger().debug(f"emotibit sync data: {self._emotibit_synch_data}\n\n\n")
-               self._emotibit_synch_publisher.publish(self._emotibit_synch_data)
-               # Flatten the msg once all modalities are received
-               self.synched_flattened_emotibit_data = self._emotibit_flatten_msgs(self._emotibit_synch_data)
-               self.get_logger().info("Emotibit data received")
-
      def _emotibit_flatten_msgs(self, msg_: EmotibitSynchData):
           """
           Since each message is a nested batched msg, they should be flattened to get the timestamp for each sample.
@@ -421,7 +408,6 @@ class ZatConsorNode(Node):
                self.synched_flattened_emotibit_data = dict(sorted(flattened_data.items()))
           self.get_logger().debug(f"{self.synched_flattened_emotibit_data.keys()}\n{self.synched_flattened_emotibit_data}\n\n")
           
-
      def _emotibit_flatten_helper_msg(self, msg: EmotibitMsg, s: str, emotibit_data: dict):
           """
           A helper function to flatten msgs from individual streams but also combine it with previously received msgs in case they have the same timestamp.

@@ -1,10 +1,27 @@
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+This Script tests if the exceptions/errors are raised when parameter/argument conditions are not met. The code in emotibit_sdk.py is tested with this script.
+
+Author:
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
 import pytest
 from emotibit_sdk.emotibit_sdk import SensorDataEmotibitWithSdk
 
-"""
-# Code tested: emotibit_sdk.py
-# Tests overview: This Script tests if the exceptions/errors are raised when parameter/argument conditions are not met.
-"""
 
 def test_exception_raised_for_incorrect_parameter_value_1(mocksensorEmotibit):
     """Test that an incorrect type for the 'stream_names' ROS parameter raises a TypeError. In the ROS node, this is the  'type_stream' argument."""

@@ -1,3 +1,24 @@
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+This file has functions that are called in multiple tests.
+
+Author:
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
 import pytest
 from unittest.mock import create_autospec, MagicMock, patch
 import rclpy
@@ -9,7 +30,6 @@ from src.consor.tests.test_openbci.openbci_constants import board_data, board_de
 from src.consor.tests.test_emotibit.emotibit_constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
 from src.consor.tests.test_esense.esense_constants import *
 
-"""This file has functions that are called in multiple tests."""
 
 @pytest.fixture
 def mocksensorEmotibit(monkeypatch):

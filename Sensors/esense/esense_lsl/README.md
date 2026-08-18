@@ -11,10 +11,6 @@
 - The ROS2 package for publishing eSense sensor data is *esense_pkg*.
 - When the data is transferred via **Lab Streaming Layer (LSL)**, then the **esense_pkg** ROS2 package should be used.
 
-#### esense_lsl folder contents
-
-- esense_pkg: ROS2 package for eSense
-
 # esense_pkg Package
 
 ### Requirements/Dependencies
@@ -35,30 +31,11 @@
 ### Installation
 
 - Pylsl: `pip install pylsl`
-- Liblsl: There are 2 ways to install this.
-    - Option 1: (Conda installation is required.)
-        1. Activate an existing conda environment using `conda activate <environment name>` or create a new environment using `conda create --name <new env name> --clone <existing environment such as base>` and once created, activate this new environment
-        2. `conda install -c conda-forge liblsl`
-    - Option 2:
-        1. Go to the [liblsl GitHub repository](https://github.com/sccn/liblsl).
-        2. Navigate to the [Release page](https://github.com/sccn/liblsl/releases)
-        3. Download the .deb file specific to your system.  (For example, if the system is Jammy, download: liblsl-1.16.2-jammy_amd64.deb)
-        4. Go to the Downloads folder and open a terminal
-        5. Run the command: `sudo dpkg -i liblsl-1.16.2-jammy_amd64.deb`
-
+- Liblsl: Refer to **<<link to esense liblsl installation section in documentation>>** for steps to install liblsl
 ##### ROS2 packages
 
 - Create a ROS2 workspace using `mkdir -p zat_ws/src` or if a ROS2 workspace already exists use `cd zat_ws/src` 
-- In src, download **consor** and **zat_ros2_msgs** repositories.
-    - If GitLab is [setup preferably with SSH](https://docs.gitlab.com/user/ssh/) and access to [zat_ros2_msgs](https://git.inf.h-brs.de/zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs) is granted then clone the repositories using the following command:
-        ```
-        # Clone zat_ros2_msgs repository
-        git clone git@git.inf.h-brs.de:zat-rhein-ruhr/zat-prototype-demo/zat_ros2_msgs.git
-
-        # Clone consor repository
-        git clone git@git.inf.h-brs.de:zat-rhein-ruhr/zat-prototype-demo/consor.git
-        ```
-    - If GitLab is not setup, then manually download the repositories.
+- In src, add **consor** and **zat_ros2_msgs** repositories. This is included in the **<< link to releases >>**.
 
 
 ### Usage/Steps
@@ -76,36 +53,7 @@
 
 ##### Steps to run the 'esense_pkg' package
 
-
-###### *Follow these steps if 'liblsl' was installed using Option 1 (in the section above).  (Scroll down to see how to run the emotibit_pkg in case 'liblsl' was installed using Option 2)*
-
-1. Get the liblsl path
-- We use `pylsl` library which depends on `liblsl`.  However, `liblsl` is not found outside the conda environment, causing errors when running the ROS node outside the environment.
-- Hence, we want to export the path for the code to find `liblsl` when it runs.  To do this, 
-    1. Activate an existing conda environment using `conda activate <environment name>` or create a new environment using `conda create --name <new env name> --clone <existing environment such as base>` and once created, activate this new environment
-    2. Install `pylsl` and `liblsl` using commands mentioned in previous section.
-    3. `conda deactivate`
-    4. Run the command `find / -name "liblsl.so*" 2>/dev/null` This command returns the path where this library is installed.<br> 
-    For example, */home/<user>/anaconda3/envs/<environment-name>/lib/liblsl.so*
-
-2. Running the ROS node
-- `cd zat_ws`
-- `source /opt/ros/humble/setup.bash`
-- `export LD_LIBRARY_PATH=<path to liblsl found in step 4 of Get the liblsl path>:$LD_LIBRARY_PATH` This adds the path to the library liblsl to the list of paths that the system will search.  Also, in any terminal where this package is to be run, this command should be run similar to how ros2 is sourced.<br>
-For example, *export LD_LIBRARY_PATH=/home/\<user\>/anaconda3/envs/\<environment-name\>/lib:$LD_LIBRARY_PATH*.  Note that we only gave the folder name and not the file name here.
-- `colcon build`
-- `source install/setup.bash`
-- `ros2 launch esense_pkg launch.py`
-
-###### *Follow these steps if 'liblsl' was installed using Option 2 (in the section above)*
-
-- Once the application is set, we can run the ROS2 package.
-- Open a terminal
-- In the respective ROS2 workspace (e.g. zat_ws1), `source /opt/ros/humble/setup.bash`
-- `colcon build`
-- `source install/setup.bash`
-- `ros2 launch esense_pkg launch.py`
-
+Refer to **<<link to esense documentation section for running the esense_pkg>>** to run the ROS2 package for eSense.
 
 ##### Notes
 
@@ -119,10 +67,4 @@ For example, *export LD_LIBRARY_PATH=/home/\<user\>/anaconda3/envs/\<environment
 
 ##### Troubleshooting
 
-- If the package does not build using colcon build, check 
-    - whether consor is downloaded in *_ws/src
-    - whether zat_ros2_msgs is downloaded in the same folder as consor (i.e., in *_ws/src)
-    
-- If there is no output after ros2 launch, check
-    - if the application is running (i.e., Start sampling is clicked, and data is being sampled) on the android device
-    - whether the correct android application is in use (Name of the app: eSense_sdk_2 or eSense SDK 2 Demo (ZAT))
+If there are any problems, try troubleshooting. Refer to troubleshooting section in the << **link to documentation** >>.

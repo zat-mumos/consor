@@ -1,10 +1,29 @@
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+# 
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+# 
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+"""
+This file contains constants that are useful for testing emotibit_sdk.py with the help of unit-tests.
+
+Author:
+    Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
+"""
 import numpy as np
 import pandas as pd
 import zat_ros2_msgs.msg
 import std_msgs.msg
 import builtin_interfaces.msg
-
-"""This file contains constant values that is useful for testing emotibit_sdk.py with the help of unit-tests."""
 
 # Board description
 board_description_default = {'accel_channels': [1, 2, 3], 'gyro_channels': [4, 5, 6], 'magnetometer_channels': [7, 8, 9], 'marker_channel': 11, 'name': 'Emotibit', 'num_rows': 12, 'package_num_channel': 0, 'sampling_rate': 25, 'timestamp_channel': 10}

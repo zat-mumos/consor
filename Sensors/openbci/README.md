@@ -35,7 +35,7 @@ Installation instructions can be found on [this](https://brainflow.readthedocs.i
 ##### ROS2 packages
 
 - Create a ROS2 workspace using `mkdir -p zat_ws/src` or if a ROS2 workspace already exists then use `cd zat_ws/src`
-- In src folder, download **consor** and **zat_ros2_msgs** repositories
+- In src folder, add **consor** and **zat_ros2_msgs** repositories. This is included in the **<< link to releases >>**.
 
 
 ### Usage

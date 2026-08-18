@@ -1,3 +1,18 @@
+# © 2026 Hochschule Bonn-Rhein-Sieg <https://www.h-brs.de/>
+
+# This program is free software: you can redistribute it and/or modify it 
+# under the terms of the GNU General Public License as published by the 
+# Free Software Foundation, either version 3 of the License, or (at your 
+# option) any later version.
+
+# This program is distributed in the hope that it will be useful, but 
+# WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+# Public License for more details.
+
+# You should have received a copy of the GNU General Public License along 
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
 from setuptools import find_packages, setup
 
 package_name = 'zat_consor_sync'
@@ -16,7 +31,7 @@ setup(
     maintainer='Oviya Rajavel, Swathy Cheruvalath',
     maintainer_email='oviya.rajavel@smail.inf.h-brs.de, swathy.cheruvalath@smail.inf.h-brs.de',
     description='A ROS2 package for synchronising and publishing multiple consor wearable sensors.',
-    license='TODO: License declaration',
+    license='GPL-3.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
