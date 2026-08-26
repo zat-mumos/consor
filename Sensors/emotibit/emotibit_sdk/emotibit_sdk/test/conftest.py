@@ -20,15 +20,11 @@ Author:
     Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
 """
 import pytest
-from unittest.mock import create_autospec, MagicMock, patch
+from unittest.mock import create_autospec
 import rclpy
-import pylsl
 from emotibit_sdk.emotibit_sdk import EmotibitSensor
-from openbci_pkg.sensor import OpenbciSensor
 from emotibit_sdk.custom_exceptions import InvalidChannelNameError
-from src.consor.tests.test_openbci.openbci_constants import board_data, board_description
-from src.consor.tests.test_emotibit.emotibit_constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
-from src.consor.tests.test_esense.esense_constants import *
+from emotibit_constants import board_data_default, board_data_auxiliary, board_data_ancillary, board_description_default, board_description_auxiliary, board_description_ancillary
 
 
 @pytest.fixture
@@ -85,66 +81,9 @@ def mocksensorEmotibit(monkeypatch):
     return obj_sensor_class
 
 
-@pytest.fixture
-def mocksensorOpenbci(monkeypatch):
-    obj_sensor_class = OpenbciSensor()
-    patches = { # for methods without arguments
-        'init_board': None,
-        'enable_accel': None,
-        'prepare': None,
-        'is_board_prepared': True, 
-        'start_streaming': None,
-        'stop_streaming': None,
-        'release_session': None,
-        'get_board_data': board_data,
-        'get_board_description': board_description
-    }
-
-    for method_name, method_implementation in patches.items():
-        method_instance = getattr(obj_sensor_class, method_name)
-        mock_method = create_autospec(method_instance)
-        mock_method.return_value = method_implementation
-        monkeypatch.setattr(obj_sensor_class, method_name, mock_method)
-
-    def init_parser(port: str):
-        return port
-    mock_method = create_autospec(obj_sensor_class.init_parser, side_effect = init_parser)
-    monkeypatch.setattr(obj_sensor_class, "init_parser", mock_method)
-
-    return obj_sensor_class
-
-
 @pytest.fixture(scope='module', autouse=True)
 def rclpy_init_shutdown():
     """Mock ROS node init and shutdown"""
     rclpy.init()
     yield
     rclpy.shutdown()
-
-@pytest.fixture(autouse=True)
-def mock_streaminlet(monkeypatch):
-    info = pylsl.StreamInfo(name="eSense", type="sensor_data", channel_count=4, 
-                        channel_format="string", source_id="lsl_esense_sensor_12345",
-                        nominal_srate=1.000000000000000)
-    
-    desc = info.desc()
-    desc.append_child('Metadata').append_child_value("Android_API_Level", stream_info_android_api_level)\
-        .append_child_value("Device_Name", stream_info_device_name)\
-        .append_child_value("Manufacturer_Name", stream_info_manufacturer_name)\
-        .append_child_value("Sensor_Type", stream_info_sensor_type)\
-        .append_child_value("Sampling_rate", stream_info_sampling_rate)\
-        .append_child_value("Units", stream_info_units)
-
-    mock_stream_inlet = MagicMock()
-    mock_stream_inlet.info.return_value = info
-    mock_stream_inlet.pull_sample.return_value = sample
-    
-    monkeypatch.setattr('src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl.StreamInlet',
-                    MagicMock(return_value=mock_stream_inlet))
-
-    return mock_stream_inlet
-    
-@pytest.fixture(autouse=True)
-def mock_resolve_byprop():
-    with patch('src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl.resolve_byprop') as mock_property:
-        yield mock_property

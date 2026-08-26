@@ -21,7 +21,7 @@ Author:
 """
 from unittest.mock import MagicMock
 from emotibit_sdk.emotibit_sdk import SensorDataEmotibitWithSdk
-from src.consor.tests.test_emotibit.emotibit_constants import *
+from emotibit_constants import *
 
 test_stream = ['Accelerometer', 'PPG', 'Temperature']
 test_topic = ['mock_emotibit/default_preset', 'mock_emotibit/auxiliary_preset', 'mock_emotibit/ancillary_preset']

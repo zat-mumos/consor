@@ -9,22 +9,13 @@
 - misc<br>
 The *misc* folder includes screenshots, images etc.
 
-- esense_ble<br>
-The *esense_ble* folder includes a ROS2 package (physio_sensor) to publish eSense data to a ROS node using **bluetoothctl**.  The data is transferred from Android Studio to the Linux system using BLE (Bluetooth Low Energy).  For more information about installation, usage, etc. refer to the README within this directory.
-
 - esense_lsl<br>
 The *esense_lsl* folder includes a ROS2 package (esense_pkg) to publish eSense data to a ROS node using **pylsl**.  The data is transferred from Android Studio to the Linux system using LSL (Lab Streaming Layer).  For more information about installation, usage, etc. refer to the README within this directory.
 
 ### Hardware Setup
 
-- The hardware setup for these sensors when transferring data via Bluetooth is as follows:
-
-![eSense Hardware Setup (Bluetooth Low Energy)](Sensors/esense/misc/Images/eSense_HardwareSetup_BLE.png)
-
-<br>
-
 - The hardware setup for these sensors when transferring data via Lab Streaming Layer (LSL) is as follows:
 
-![eSense Hardware Setup (Lab Streaming Layer)](Sensors/esense/misc/Images/eSense_HardwareSetup_LSL.png)
+![eSense Hardware Setup (Lab Streaming Layer)](./misc/Images/eSense_HardwareSetup_LSL.png)
 
 <br>

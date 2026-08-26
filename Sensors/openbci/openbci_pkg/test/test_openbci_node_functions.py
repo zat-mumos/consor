@@ -21,7 +21,7 @@ Author:
 """
 from unittest.mock import MagicMock
 from openbci_pkg.openbci import SensorDataOpenbci
-from src.consor.tests.test_openbci.openbci_constants import *
+from openbci_constants import *
 import numpy as np
 
 

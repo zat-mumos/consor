@@ -20,9 +20,9 @@ Author:
     Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
 """
 from unittest.mock import patch
-from src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl import EsenseLslReceiver
+from esense_pkg.esense_lsl import EsenseLslReceiver
 from esense_pkg.esense_pkg import SensorDataEsense
-from src.consor.tests.test_esense.esense_constants import *
+from esense_constants import *
 
 def test_acquire_data(mock_streaminlet):
     obj_sensor_class = EsenseLslReceiver(inlet=mock_streaminlet)

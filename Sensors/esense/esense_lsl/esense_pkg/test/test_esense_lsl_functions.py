@@ -19,8 +19,8 @@ This script tests functions within esense_lsl.py
 Author:
     Swathy Cheruvalath <swathy.cheruvalath@smail.inf.h-brs.de>
 """
-from src.consor.Sensors.esense.esense_lsl.esense_pkg.esense_pkg.esense_lsl import EsenseLslReceiver
-from src.consor.tests.test_esense.esense_constants import *
+from esense_pkg.esense_lsl import EsenseLslReceiver
+from esense_constants import *
 
 def test_get_stream_info(mock_streaminlet):
     obj_sensor_class = EsenseLslReceiver(inlet = mock_streaminlet)

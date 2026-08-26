@@ -3,16 +3,3 @@ MuMoS (Multimodal Mobile Sensors)
 
 This product is released under the terms of the
 GNU General Public License version 3 or any later version.
-
-This product includes software developed at the
-Open Source Robotics Foundation (https://www.openrobotics.org/).
-
-The files in the following directories are available under
-the Apache License, Version 2.0.:
-
-Sensors/common_functions/test
-Sensors/emotibit/emotibit_sdk/emotibit_sdk/test
-Sensors/esense/esense_lsl/esens_pkg/test
-Sensors/movella_xSens_dot/movella_pkg/test
-Sensors/openbci/openbci_pkg/test
-zat_consor_sync/test

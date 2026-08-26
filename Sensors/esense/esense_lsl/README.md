@@ -4,7 +4,7 @@
 
 - The hardware setup for these sensors are as follows:
 
-![eSense Hardware Setup](Sensors/esense/misc/Images/eSense_HardwareSetup_LSL.png)
+![eSense Hardware Setup](../misc/Images/eSense_HardwareSetup_LSL.png)
 
 <br>
 
