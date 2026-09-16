@@ -59,12 +59,18 @@ class SensorDataEmotibitWithSdk(Node):
 
     def __init__(self,
                  sensor: EmotibitSensor,
-                 batch_time: float = 1e-5, # the frequency at which the data should be collected
+                 batch_time: float = 1e-5,
                  type_stream: list  = ["default_stream"],
                  sensor_topic: list = ["deafault_topic"]
                  ):
         """
         Initialise the SensorDataEmotibitWithSdk class.
+
+        Arguments:
+        EmotibitSensor sensor: Object of EmotibitSensor class
+        float batch_time: Duration for which data should be collected
+        list type_stream: List of streams for which data should be collected and published
+        list sensor_topic: List of ROS2 topic names for each stream mentioned in 'type_stream'
         """
         super().__init__('sensor_data_emotibit_with_sdk')
 

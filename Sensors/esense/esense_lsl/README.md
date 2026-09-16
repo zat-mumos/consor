@@ -1,6 +1,6 @@
 # Introduction
 
-- This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ )  with the publisher node using **pylsl**.
+- This repository is specifically for bridging the [eSense physiological sensors](https://mindfield-esense.com/ ) specifically, eSense skin response, temperature and respiration sensor with the publisher node using **pylsl**.
 
 - The hardware setup for these sensors are as follows:
 
