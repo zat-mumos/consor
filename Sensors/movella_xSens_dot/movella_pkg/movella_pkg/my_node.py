@@ -37,7 +37,7 @@ from rclpy.node import Node
 from rclpy.logging import get_logger
 
 # Add the path to the folder containing xdpchandler.py
-sys.path.append(os.path.abspath('/home/jay/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+sys.path.append(os.path.expanduser('~/zat_ws/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
 from xdpchandler import XdpcHandler
 import movelladot_pc_sdk  # Assuming you have this imported
 

@@ -40,9 +40,8 @@ from zat_ros2_msgs.msg import Imu
 
 
 # Add the path to xdpchandler.py
-# sys.path.append(os.path.abspath('/home/jay/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
 
-sys.path.append(os.path.expanduser('~/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+sys.path.append(os.path.expanduser('~/zat_ws/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
 
 
 
