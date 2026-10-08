@@ -46,7 +46,7 @@ from std_msgs.msg import String  # Publish JSON as String messages
 from zat_ros2_msgs.msg import MovellaData, MovellaImu, MovellaSensor
 from builtin_interfaces.msg import Time
 
-# sys.path.append(os.path.expanduser('~/ros2_movella/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
+# sys.path.append(os.path.expanduser('~/zat_ws/src/movella_pkg/movella_pkg/examples/xdpcsdk/python'))
 
 
 

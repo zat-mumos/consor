@@ -58,10 +58,17 @@ class SensorDataOpenbci(Node):
                  modality: str = 'default_modality',
                  get_accel: Literal[0, 1] = 0,
                  port: str = 'no_port',
-                 batch_time: float = 1e-5, # the frequency at which the data should be collected
+                 batch_time: float = 1e-5, 
                  ):
         """
         Initialise the SensorDataOpenbci class.
+
+        Arguments:
+        OpenbciSensor sensor: Object of the OpenbciSensor class
+        str modality: Modality for which the data should be collected
+        Literal get_acc: Enable accelerometer data. If 0, accelerometer data is not collected. If 1, accelerometer data will be collected.
+        str port: Port for communicating with the sensor
+        float batch_time: Duration for which data should be collected
         """
         super().__init__('sensor_data_openbci')
 

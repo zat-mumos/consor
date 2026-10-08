@@ -63,6 +63,16 @@ class EmotibitStreamsCombine(Node):
             emotibit_synch_topic: str = 'sensor/emotibit/data'):
         """
         Initialise the EmotibitStreamsCombine class.
+        
+        Arguments:
+        float timer_period: Determines the intervals at which the callback function is called
+        str emotibit_accelerometer_topic: Name of the ROS2 topic publishing accelerometer data
+        str emotibit_gyroscope_topic: Name of the ROS2 topic publishing gyroscope data
+        str emotibit_magnetometer_topic: Name of the ROS2 topic publishing magnetometer data
+        str emotibit_ppg_topic: Name of the ROS2 topic publishing ppg data
+        str emotibit_eda_topic: Name of the ROS2 topic publishing eda data
+        str emotibit_temperature_topic: Name of the ROS2 topic publishing temperature data
+        str emotibit_synch_topic: ROS2 topic for publishing combined EmotiBit data
         """
         super().__init__('emotibit_streams_combine')
 
@@ -131,21 +141,57 @@ class EmotibitStreamsCombine(Node):
 
     # Since each modality in emotibit has its own ros2 topic, when new msgs are received emotibit_sync() is called
     def _emotibit_accelerometer_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit accelerometer data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/acc topic.
+        """
         self._emotibit_dict["accelerometer"] = msg
 
     def _emotibit_gyroscope_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit gyroscope data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/gyro topic.
+        """
         self._emotibit_dict["gyroscope"] = msg
 
     def _emotibit_magnetometer_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit magnetometer data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/mag topic.
+        """
         self._emotibit_dict["magnetometer"] = msg
 
     def _emotibit_ppg_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit PPG data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/ppg topic.
+        """
         self._emotibit_dict["ppg"] = msg  
 
     def _emotibit_eda_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit EDA data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/eda topic.
+        """
         self._emotibit_dict["eda"] = msg 
 
     def _emotibit_temperature_callback(self, msg: EmotibitMsg):
+        """
+        A callback function for EmotiBit sensor that is executed whenever a new msg from ROS2 topic publishing EmotiBit temperature data is received.
+        
+        Arguments:
+        EmotibitMsg msg: The message received from /emotibit/temp topic.
+        """
         self._emotibit_dict["temperature"] = msg      
 
     def _emotibit_synch_callback(self):
@@ -173,6 +219,7 @@ class EmotibitStreamsCombine(Node):
                                "temperature": None}                            
     
 def main():
+    """Run the EmotibitStreamsCombine Node"""
     rclpy.init(args= None)
     emotibit_data =  EmotibitStreamsCombine(
         emotibit_accelerometer_topic = '/emotibit/acc',

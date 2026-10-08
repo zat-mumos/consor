@@ -55,8 +55,9 @@ class SensorDataEsense(Node):
         Initialise the SensorDataEsense class.
 
         Arguments:
+        EsenseLslReceiver sensor: Object of class EsenseLslReceiver
         str sensor_topic: ROS topic
-        float batch_time: Determines the intervals at which timer_callback() is called
+        float batch_time: Determines the duration for which the data is collected before publishing
         """
         super().__init__('sensor_data_esense')
 

@@ -71,7 +71,17 @@ class ZatConsorNode(Node):
           consor_wearable_sensor_topic: str = 'sensor/consor/wearable/data',
           sync_topic: str = 'sensor/synched/data'):
           super().__init__('zat_consor_node')
-          """initialise ZatConsorNode class"""
+          """
+          Initialise ZatConsorNode class
+          
+          Arguments:
+          float sync_period: Period for which the timestamps should be synchronised
+          str movella_topic: ROS2 topic publishing movella data
+          str esense_topic: ROS2 topic publishing esense data
+          str emotibit_sync_topic: ROS2 topic publishing combined emotibit data
+          str consor_wearable_sensor_topic: ROS2 topic for published combined data
+          str sync_topic: ROS2 topic for publishing synched data.
+          """
 
           self.declare_parameters(
                namespace='',
