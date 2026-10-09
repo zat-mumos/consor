@@ -61,7 +61,7 @@ class SensorDataEsense(Node):
         """
         super().__init__('sensor_data_esense')
 
-        self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
+        # self.get_logger().set_level(LoggingSeverity.DEBUG) # Uncomment this line to debug the code.
 
         self.i = 0 # counter
 
