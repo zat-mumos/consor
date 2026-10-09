@@ -3,3 +3,8 @@ MuMoS (Multimodal Mobile Sensors)
 
 This product is released under the terms of the
 GNU General Public License version 3 or any later version.
+
+The following files are available under the MIT License.
+- zat_stress/vendor/CNN_UQ.py
+- zat_stress/vendor/dialogue_manager.py
+- zat_stress/vendor/eda_features.py
